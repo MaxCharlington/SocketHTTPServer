@@ -1,21 +1,25 @@
+#include <string>
+
 #include "src/server.hpp"
+
+using namespace std::string_literals;
+using enum HTTPMethod;
 
 int main()
 {
     Server s{3000,
         Route{
-            "/", "GET",
+            "/", GET,
             [](auto req){
-                printf("HTTP/1.1 200 OK\r\n\r\n");
-                printf("Hello! You are using %s", req.get_header("User-Agent"));
+                return "Hello! You are using "s + req.get_header("User-Agent");
             }
         },
         Route{
-            "/", "POST",
+            "/", POST,
             [](auto req){
-                printf("HTTP/1.1 200 OK\r\n\r\n");
-                printf("Wow, seems that you POSTed %d bytes. \r\n", req.payload_size);
-                printf("Fetch the data using `payload` variable.");
+                auto res = "Wow, seems that you POSTed" + std::to_string(req.payload_size) + "bytes. \r\n";
+                res += "Fetch the data using `payload` variable.";
+                return res;
             }
         }
     };

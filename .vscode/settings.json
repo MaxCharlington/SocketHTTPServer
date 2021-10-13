@@ -48,6 +48,12 @@
         "compare": "cpp",
         "concepts": "cpp",
         "numbers": "cpp",
-        "ranges": "cpp"
+        "ranges": "cpp",
+        "chrono": "cpp",
+        "ratio": "cpp",
+        "iostream": "cpp",
+        "semaphore": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp"
     }
 }

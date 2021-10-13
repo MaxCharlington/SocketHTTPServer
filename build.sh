@@ -1,1 +1,1 @@
-g++-11 -std=c++2b ./main.cpp -o server.run -Wall -Wextra -Wshadow
+g++-11 -m64 -std=c++2b -Wall -Wextra -Wshadow ./main.cpp -o server.run
