@@ -8,9 +8,19 @@ struct User
     std::string username;
     std::string password;
     std::string role;
-    std::vector<std::string> fileLines;
 
-    void copyFile(const std::string &file_name)
+    User(std::string username_, std::string password_, std::string role_)
+        : username{std::move(username_)}, password{std::move(password_)}, role{std::move(role_)} {}
+
+    User(std::string db_line); // +
+
+    std::string getStrRepr() {
+        return username + ' ' + password + ' ' + role + '\n';
+    }
+
+    //--------------------------------------------
+
+    void copyFile(const std::string &file_name) // -
     {
         std::ifstream file(file_name);
         while (!file.eof())
@@ -22,7 +32,7 @@ struct User
         file.close();
     }
 
-    auto isPresent()
+    auto isPresent() // -
     {
         std::string temp;
         for (std::string it : fileLines)
@@ -43,18 +53,5 @@ struct User
             }
         }
         return false;
-    }
-
-    void writeToDb(std::string file)
-    {
-        std::ofstream fout(file);
-        if (fout.is_open())
-        {
-            if (isPresent())
-            {
-                fout << this->username << " " << this->password << " " << this->role << std::endl;
-            }
-        }
-        fout.close();
     }
 };
