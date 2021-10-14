@@ -1,35 +1,14 @@
 #pragma once
 
-#include <utility>
-#include <bit>
 #include <array>
 #include <vector>
 #include <stdexcept>
 #include <string_view>
 #include <cstring>
 
-enum struct HTTPMethod {
-    GET,
-    POST,
-    PUT,
-    DELETE
-};
-constexpr auto HTTPMethodStrs = std::array<const char*, 4>{"GET", "POST", "PUT", "DELETE"};
+#include "rest.hpp"
 
-HTTPMethod getHTTPMethod(std::string_view method) {
-    for (size_t i = 0; i < HTTPMethodStrs.size(); i++) {
-        if (HTTPMethodStrs[i] == method) {
-            return static_cast<HTTPMethod>(i);
-        }
-    }
-    throw std::runtime_error(std::string("Unknown HTTP method ") + method.data());  // method.data() should be properly terminated
-}
-
-const char* getHTTPMethodStr(HTTPMethod method) {
-    return HTTPMethodStrs[std::to_underlying(method)];
-}
-
-template <typename KeyT = const char*, typename ValueT = const char*>
+template <typename KeyT = std::string, typename ValueT = std::string>
 struct Header
 {
     using key_type = KeyT;
@@ -43,21 +22,27 @@ struct Header
 };
 
 
-struct Request {
-    using Header_t = Header<>;
+constexpr auto newLine = "\r\n";
 
-    HTTPMethod method;    // GET or POST
-    char* uri;       // "/index.html" things before '?'
-    char* params;    // "a=1&b=2"     things after  '?'
-    char* protocol;  // "HTTP/1.1"
+struct Request {
+
+    HTTPMethod method;
+    char* uri;       // before '?'
+    char* params;    // "a=1&b=2" things after  '?'
+    char* protocol;  // "HTTP/<version>"
+    
+    using Header_t = Header<>;
     std::vector<Header_t> headers;
-    const char *payload; // for POST
-    int payload_size;
+    std::string content;
 
     Request() = default;
     Request(char* req);
+    Request(HTTPMethod method_, char* uri_, char* params_ = "", char* protocol_ = "HTTP/1.1")
+        : method{method_}, uri{uri_}, params{params_}, protocol{protocol_}, headers{}, content{} {}
 
     Request::Header_t::value_type get_header(std::string_view key);
+    void addContent(std::string content_);
+    std::string to_string() const;
 };
 
 Request::Request(char* req) {
@@ -65,34 +50,32 @@ Request::Request(char* req) {
     uri = strtok(nullptr, " \t");
     protocol = strtok(nullptr, " \t\r\n");
 
-    fprintf(stderr, "\x1b[32m [%s] %s\x1b[0m\n", getHTTPMethodStr(method), uri);
+    fprintf(stderr, "\x1b[32m [%s] %s\x1b[0m\n", getHTTPMethodStr(method).c_str(), uri);
 
     if (params = strchr(uri, '?'); params)
         *params++ = '\0'; //split URI
     else
         params = uri - 1; //use an empty string
 
-    char *t;
+    const char *t;
     while (true)
     {
-        char* key = strtok(nullptr, "\r\n: \t");
+        const char* key = strtok(nullptr, "\r\n: \t");
         if (!key)
             break;
-        char* value = strtok(nullptr, "\r\n");
+        const char* value = strtok(nullptr, "\r\n");
         while (*value && *value == ' ')
             value++;
         headers.emplace_back(key, value);
         fprintf(stderr, "\t[H] %s: %s\n", key, value);
         t = value + 1 + strlen(value);
-        if (t[1] == '\r' && t[2] == '\n')
+        if (t[1] == '\r' && t[2] == '\n') {
+            t += 3;
             break;
+        }
     }
+    content = t;
     puts("");
-    t++;  // now the *t shall be the beginning of user payload
-    const char* t2 = get_header("Content-Length"); // and the related header if there is
-    payload = t;
-    //payload_size = t2 ? atol(t2) : (rcvd - (t - buf));
-    payload_size = t2 ? atol(t2) : 0;  // TMP
 }
 
 Request::Header_t::value_type Request::get_header(std::string_view key) {
@@ -100,6 +83,100 @@ Request::Header_t::value_type Request::get_header(std::string_view key) {
         if (header.key == key)
             return header.value;
     }
-    return Header_t::value_type{};
+    return "";
 }
 
+void Request::addContent(std::string content_) {
+    content = std::move(content_);
+    headers.emplace_back("Content-Length", std::to_string(content.length()));
+    headers.emplace_back("Content-Type", "text/plain");
+}
+
+std::string Request::to_string() const {
+    auto get_params = [&]() -> std::string {
+        if (strlen(params) > 0) {
+            return std::string("?") + params;
+        }
+        return "";
+    };
+    auto req_str = getHTTPMethodStr(method) + ' ' + uri + get_params() + ' ' + protocol + newLine + newLine;
+    for (const auto& header : headers) {
+        req_str += std::string(header.key) + ": " + header.value + newLine;
+    }
+    req_str += newLine;
+    req_str += content;
+    return req_str;
+}
+
+
+struct Response {
+    char* protocol;
+    uint16_t status;
+    char* status_message;
+
+    using Header_t = Header<>;
+    std::vector<Header_t> headers;
+
+    std::string content;
+
+    Response() = default;
+    Response(char* protocol_, uint16_t status_, char* status_message_)
+        : protocol{protocol_}, status{status_}, status_message{status_message_}, headers{}, content{} {}
+    Response(char* res);
+
+    Response::Header_t::value_type get_header(std::string_view key);
+    void addContent(std::string content_);
+    std::string to_string() const;
+};
+
+Response::Response(char* res) {
+    protocol = strtok(res, " \t");
+    status = static_cast<uint8_t>(atoi(strtok(nullptr, " \t")));
+    status_message = strtok(nullptr, "\t\r\n");
+
+    fprintf(stderr, "\x1b[32m [%s] %d\x1b[0m\n", status_message, status);
+
+    const char *t;
+    while (true)
+    {
+        const char* key = strtok(nullptr, "\r\n: \t");
+        if (!key)
+            break;
+        const char* value = strtok(nullptr, "\r\n");
+        while (*value && *value == ' ')
+            value++;
+        headers.emplace_back(key, value);
+        fprintf(stderr, "\t[H] %s: %s\n", key, value);
+        t = value + 1 + strlen(value);
+        if (t[1] == '\r' && t[2] == '\n') {
+            t += 3;
+            break;
+        }
+    }
+    content = t;
+    puts("");
+}
+
+Response::Header_t::value_type Response::get_header(std::string_view key) {
+    for (auto header : headers) {
+        if (header.key == key)
+            return header.value;
+    }
+    return "";
+}
+
+void Response::addContent(std::string content_) {
+    content = std::move(content_);
+    headers.emplace_back("Content-Length", std::to_string(content.length()));
+    headers.emplace_back("Content-Type", "text/plain");
+}
+
+std::string Response::to_string() const {
+    auto resp_str = std::string(protocol) + ' ' + std::to_string(status) + ' ' + status_message + newLine + newLine;  // Incomplete
+    for (const auto& header : headers) {
+        resp_str += header.key + ": " + header.value + newLine;
+    }
+    resp_str += newLine;
+    resp_str += content;
+    return resp_str;
+}

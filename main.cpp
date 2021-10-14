@@ -1,7 +1,6 @@
 #include <string>
 
 #include "src/server.hpp"
-#include "src/database.hpp"
 
 using namespace std::string_literals;
 using enum HTTPMethod;
@@ -18,8 +17,8 @@ int main()
         Route{
             "/", POST,
             [](auto req){
-                auto res = "Wow, seems that you POSTed" + std::to_string(req.payload_size) + "bytes. \r\n";
-                res += "Fetch the data using `payload` variable.";
+                auto res = "Wow, seems that you POSTed " + std::to_string(req.content.length()) + "bytes. \r\n";
+                res += "Content was: " + req.content;
                 return res;
             }
         }

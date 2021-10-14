@@ -1,3 +1,5 @@
+#pragma once
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -115,22 +117,20 @@ void Server::respond(size_t n)
     {
         // Handling received message
         buf[rcvd] = '\0';
-
         Request req{buf.data()};
-
-        const std::string endl = "\r\n";
-        std::string response = "HTTP/1.1 500 Internal Server Error" + endl + endl;
+        Response response{"HTTP/1.1", 500, "Internal Server Error"};
         for (const auto& route : routes) {
             if (route.match(req)) {
                 try {
-                    response = "HTTP/1.1 200 OK" + endl + endl + route.handler(req) + endl;
+                    response = Response{"HTTP/1.1", 200, "OK"};
+                    response.addContent(route.handler(req));
                 }
                 catch (...) {}
                 break;
             }
         }
-        write(clientfd, response.data(), response.length());
-
+        auto response_str = response.to_string();
+        write(clientfd, response_str.c_str(), response_str.length());
         shutdown(clientfd, SHUT_RDWR);
         close(clientfd);
     }
