@@ -12,46 +12,39 @@ struct User
     User(std::string username_, std::string password_, std::string role_)
         : username{std::move(username_)}, password{std::move(password_)}, role{std::move(role_)} {}
 
-    User(std::string db_line); // +
+    User(std::string db_line);
 
-    std::string getStrRepr() {
-        return username + ' ' + password + ' ' + role + '\n';
-    }
-
-    //--------------------------------------------
-
-    void copyFile(const std::string &file_name) // -
+    std::string getStrRepr()
     {
-        std::ifstream file(file_name);
-        while (!file.eof())
-        {
-            std::string line;
-            std::getline(file, line);
-            fileLines.push_back(line);
-        }
-        file.close();
+        return username + ' ' + password + ' ' + role;
     }
+    auto operator<=>(const User &) const = default;
+};
 
-    auto isPresent() // -
+User::User(std::string db_line)
+{
+    int infoCounter = 0;
+    for (char it : db_line)
     {
-        std::string temp;
-        for (std::string it : fileLines)
+        if (it != ' ')
         {
-            for (auto ch : it)
+            if (infoCounter == 0)
             {
-                if (ch != ' ')
-                {
-                    temp+=ch;
-                }
-                else{
-                    break;
-                }
+                username += it;
             }
-            if (this->username == temp)
+            else if (infoCounter == 1)
             {
-                return true;
+                password += it;
+            }
+            else
+            {
+                role += it;
             }
         }
-        return false;
+        else
+        {
+            infoCounter++;
+        }
     }
+    std::cout << getStrRepr();
 };
