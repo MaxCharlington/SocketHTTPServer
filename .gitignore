@@ -1,1 +1,3 @@
-*.run
+server*
+client*
+build/
