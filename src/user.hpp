@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <vector>
+
 struct User
 {
     std::string username;
