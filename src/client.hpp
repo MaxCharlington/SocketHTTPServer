@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <cstring>
 
-#include "http.hpp"
+#include "http/http.hpp"
 
 class Client {
     constexpr static size_t BUFSIZE = 65535;
