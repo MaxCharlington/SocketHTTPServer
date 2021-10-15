@@ -18,6 +18,7 @@ struct User
     {
         return username + ' ' + password + ' ' + role;
     }
+
     auto operator<=>(const User &) const = default;
 };
 
@@ -29,22 +30,12 @@ User::User(std::string db_line)
         if (it != ' ')
         {
             if (infoCounter == 0)
-            {
                 username += it;
-            }
             else if (infoCounter == 1)
-            {
                 password += it;
-            }
             else
-            {
                 role += it;
-            }
         }
-        else
-        {
-            infoCounter++;
-        }
+        else infoCounter++;
     }
-    std::cout << getStrRepr();
 };
