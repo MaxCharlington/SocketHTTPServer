@@ -1,3 +1,5 @@
+#pragma once
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -20,7 +22,8 @@
 #include <algorithm>
 #include <ranges>
 
-#include "http.hpp"
+#include "http/http.hpp"
+#include "logger.hpp"
 
 struct Route {
     std::string_view uri;
@@ -32,6 +35,10 @@ struct Route {
     }
 };
 
+// Logging
+Logger logger{};
+const char *NEW_REQ_MESSEGE = "\x1b[32m[New request]\x1b[0m\n";
+const char *CREATE_RES_MESSEGE = "\x1b[32m[Sending response]\x1b[0m\n";
 
 class Server {
     constexpr static size_t CONNMAX = 100;
@@ -115,21 +122,26 @@ void Server::respond(size_t n)
     {
         // Handling received message
         buf[rcvd] = '\0';
-
         Request req{buf.data()};
 
-        const std::string endl = "\r\n";
-        std::string response = "HTTP/1.1 500 Internal Server Error" + endl + endl;
+        logger.log(NEW_REQ_MESSEGE, req.to_string());
+
+        Response response{"HTTP/1.1", 500, "Internal Server Error"};
         for (const auto& route : routes) {
             if (route.match(req)) {
                 try {
-                    response = "HTTP/1.1 200 OK" + endl + endl + route.handler(req) + endl;
+                    response = Response{"HTTP/1.1", 200, "OK"};
+                    response.addContent(route.handler(req));
                 }
                 catch (...) {}
                 break;
             }
         }
-        write(clientfd, response.data(), response.length());
+        auto response_str = response.to_string();
+
+        logger.log(CREATE_RES_MESSEGE, response_str);
+
+        write(clientfd, response_str.c_str(), response_str.length());
 
         shutdown(clientfd, SHUT_RDWR);
         close(clientfd);
