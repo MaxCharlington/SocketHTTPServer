@@ -1,6 +1,7 @@
 #include <string>
 
 #include "src/server.hpp"
+#include "src/database.hpp"
 
 using namespace std::string_literals;
 using enum HTTPMethod;
