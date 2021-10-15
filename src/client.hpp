@@ -13,6 +13,12 @@
 #include <cstring>
 
 #include "http/http.hpp"
+#include "logger.hpp"
+
+// Logging
+Logger logger{};
+const char *CREATE_REQ_MESSEGE = "\x1b[32m[Sending new request]\x1b[0m\n";
+const char *GOT_RES_MESSEGE = "\x1b[32m[Got response]\x1b[0m\n";
 
 class Client {
     constexpr static size_t BUFSIZE = 65535;
@@ -23,11 +29,10 @@ class Client {
     std::vector<char> buf;
     
     void setup();
+    void teardown();
 
 public:
-    Client() : buf(BUFSIZE, 0) {
-        setup();
-    }
+    Client() : buf(BUFSIZE, 0) {}
 
     void request(Request req);
     Response getResponce();
@@ -57,13 +62,29 @@ void Client::setup() {
     }
 }
 
+void Client::teardown() {
+    shutdown(sock, SHUT_RDWR);
+    close(sock);
+}
+
 void Client::request(Request req) {
     auto message = req.to_string();
-    send(sock, message.c_str(), message.length(), 0);   
+    
+    setup();
+
+    logger.log(CREATE_REQ_MESSEGE, message);
+    
+    send(sock, message.c_str(), message.length(), 0);
     size_t read_len = read(sock, buf.data(), buf.size() - 1);
     buf[read_len] = '\n';
+
+    teardown();
 }
 
 Response Client::getResponce() {
-    return {buf.data()};
+    Response res{buf.data()};
+
+    logger.log(GOT_RES_MESSEGE, res.to_string());
+
+    return {};
 }

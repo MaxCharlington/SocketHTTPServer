@@ -5,10 +5,18 @@
 using enum HTTPMethod;
 
 int main() {
-    Client c{};
-    Request r{POST, "/"};
-    r.headers.emplace_back("User-Agent", "ConsoleApplication");
-    r.addContent("Some content");
-    c.request(r);
-    std::cout << c.getResponce().content;
+    Client client{};
+
+    Request req{POST, "/"};
+    req.headers.emplace_back("User-Agent", "ConsoleApplication");  // Add method
+    
+    req.addContent("Some content");
+    client.request(req);
+
+    auto res = client.getResponce();
+
+    Request req2{GET, "/"};
+    client.request(req);
+
+    res = client.getResponce();
 }

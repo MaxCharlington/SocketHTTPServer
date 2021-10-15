@@ -50,8 +50,6 @@ Request::Request(char* req) {
     uri = strtok(nullptr, " \t");
     protocol = strtok(nullptr, " \t\r\n");
 
-    fprintf(stderr, "\x1b[32m [%s] %s\x1b[0m\n", getHTTPMethodStr(method).c_str(), uri);
-
     if (params = strchr(uri, '?'); params)
         *params++ = '\0'; //split URI
     else
@@ -67,7 +65,6 @@ Request::Request(char* req) {
         while (*value && *value == ' ')
             value++;
         headers.emplace_back(key, value);
-        fprintf(stderr, "\t[H] %s: %s\n", key, value);
         t = value + 1 + strlen(value);
         if (t[1] == '\r' && t[2] == '\n') {
             t += 3;
@@ -75,7 +72,6 @@ Request::Request(char* req) {
         }
     }
     content = t;
-    puts("");
 }
 
 Request::Header_t::value_type Request::get_header(std::string_view key) {
@@ -134,8 +130,6 @@ Response::Response(char* res) {
     status = static_cast<uint8_t>(atoi(strtok(nullptr, " \t")));
     status_message = strtok(nullptr, "\t\r\n");
 
-    fprintf(stderr, "\x1b[32m [%s] %d\x1b[0m\n", status_message, status);
-
     const char *t;
     while (true)
     {
@@ -146,7 +140,6 @@ Response::Response(char* res) {
         while (*value && *value == ' ')
             value++;
         headers.emplace_back(key, value);
-        fprintf(stderr, "\t[H] %s: %s\n", key, value);
         t = value + 1 + strlen(value);
         if (t[1] == '\r' && t[2] == '\n') {
             t += 3;
@@ -154,7 +147,6 @@ Response::Response(char* res) {
         }
     }
     content = t;
-    puts("");
 }
 
 Response::Header_t::value_type Response::get_header(std::string_view key) {
