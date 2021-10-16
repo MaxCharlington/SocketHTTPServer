@@ -124,7 +124,7 @@ void Server::respond(size_t n)
         buf[rcvd] = '\0';
         Request req{buf.data()};
 
-        logger.log(NEW_REQ_MESSEGE, req.to_string());
+        logger.log(NEW_REQ_MESSEGE, req.toString());
 
         Response response{"HTTP/1.1", 500, "Internal Server Error"};
         for (const auto& route : routes) {
@@ -137,7 +137,7 @@ void Server::respond(size_t n)
                 break;
             }
         }
-        auto response_str = response.to_string();
+        auto response_str = response.toString();
 
         logger.log(CREATE_RES_MESSEGE, response_str);
 

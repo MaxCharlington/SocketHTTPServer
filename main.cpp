@@ -12,7 +12,7 @@ int main()
         Route{
             "/", GET,
             [](auto req){
-                return "Hello! You are using "s + req.get_header("User-Agent");
+                return "Hello! You are using "s + req.getHeader("User-Agent");
             }
         },
         Route{

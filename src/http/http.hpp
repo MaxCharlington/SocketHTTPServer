@@ -40,9 +40,10 @@ struct Request {
     Request(HTTPMethod method_, char* uri_, char* params_ = "", char* protocol_ = "HTTP/1.1")
         : method{method_}, uri{uri_}, params{params_}, protocol{protocol_}, headers{}, content{} {}
 
-    Request::Header_t::value_type get_header(std::string_view key);
+    auto getHeader(std::string_view key) -> Request::Header_t::value_type;
+    void addHeader(std::string key, std::string value);
     void addContent(std::string content_);
-    std::string to_string() const;
+    auto toString() const -> std::string;
 };
 
 Request::Request(char* req) {
@@ -51,7 +52,7 @@ Request::Request(char* req) {
     protocol = strtok(nullptr, " \t\r\n");
 
     if (params = strchr(uri, '?'); params)
-        *params++ = '\0'; //split URI
+        *params++ = '\0'; //split URI   // ?
     else
         params = uri - 1; //use an empty string
 
@@ -64,22 +65,26 @@ Request::Request(char* req) {
         const char* value = strtok(nullptr, "\r\n");
         while (*value && *value == ' ')
             value++;
-        headers.emplace_back(key, value);
+        addHeader(key, value);
         t = value + 1 + strlen(value);
-        if (t[1] == '\r' && t[2] == '\n') {
-            t += 3;
+        if (t[1] == '\r' && t[2] == '\n') {  // ?
+            t += 3;  // ?
             break;
         }
     }
     content = t;
 }
 
-Request::Header_t::value_type Request::get_header(std::string_view key) {
+Request::Header_t::value_type Request::getHeader(std::string_view key) {
     for (auto header : headers) {
         if (header.key == key)
             return header.value;
     }
     return "";
+}
+
+void Request::addHeader(std::string key, std::string value) {
+    headers.emplace_back(std::move(key), std::move(value));
 }
 
 void Request::addContent(std::string content_) {
@@ -88,14 +93,14 @@ void Request::addContent(std::string content_) {
     headers.emplace_back("Content-Type", "text/plain");
 }
 
-std::string Request::to_string() const {
+std::string Request::toString() const {
     auto get_params = [&]() -> std::string {
         if (strlen(params) > 0) {
             return std::string("?") + params;
         }
         return "";
     };
-    auto req_str = getHTTPMethodStr(method) + ' ' + uri + get_params() + ' ' + protocol + newLine + newLine;
+    auto req_str = getHTTPMethodStr(method) + ' ' + uri + get_params() + ' ' + protocol + newLine;
     for (const auto& header : headers) {
         req_str += std::string(header.key) + ": " + header.value + newLine;
     }
@@ -120,9 +125,10 @@ struct Response {
         : protocol{protocol_}, status{status_}, status_message{status_message_}, headers{}, content{} {}
     Response(char* res);
 
-    Response::Header_t::value_type get_header(std::string_view key);
+    auto getHeader(std::string_view key) -> Response::Header_t::value_type;
+    void addHeader(std::string key, std::string value);
     void addContent(std::string content_);
-    std::string to_string() const;
+    auto toString() const -> std::string;
 };
 
 Response::Response(char* res) {
@@ -149,12 +155,16 @@ Response::Response(char* res) {
     content = t;
 }
 
-Response::Header_t::value_type Response::get_header(std::string_view key) {
+Response::Header_t::value_type Response::getHeader(std::string_view key) {
     for (auto header : headers) {
         if (header.key == key)
             return header.value;
     }
     return "";
+}
+
+void Response::addHeader(std::string key, std::string value) {
+    headers.emplace_back(std::move(key), std::move(value));
 }
 
 void Response::addContent(std::string content_) {
@@ -163,8 +173,8 @@ void Response::addContent(std::string content_) {
     headers.emplace_back("Content-Type", "text/plain");
 }
 
-std::string Response::to_string() const {
-    auto resp_str = std::string(protocol) + ' ' + std::to_string(status) + ' ' + status_message + newLine + newLine;  // Incomplete
+std::string Response::toString() const {
+    auto resp_str = std::string(protocol) + ' ' + std::to_string(status) + ' ' + status_message + newLine;
     for (const auto& header : headers) {
         resp_str += header.key + ": " + header.value + newLine;
     }

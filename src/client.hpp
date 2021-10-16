@@ -68,7 +68,7 @@ void Client::teardown() {
 }
 
 void Client::request(Request req) {
-    auto message = req.to_string();
+    auto message = req.toString();
     
     setup();
 
@@ -84,7 +84,7 @@ void Client::request(Request req) {
 Response Client::getResponce() {
     Response res{buf.data()};
 
-    logger.log(GOT_RES_MESSEGE, res.to_string());
+    logger.log(GOT_RES_MESSEGE, res.toString());
 
     return res;
 }
