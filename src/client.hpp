@@ -76,7 +76,7 @@ void Client::request(Request req) {
     
     send(sock, message.c_str(), message.length(), 0);
     size_t read_len = read(sock, buf.data(), buf.size() - 1);
-    buf[read_len] = '\n';
+    buf[read_len] = '\0';
 
     teardown();
 }
@@ -86,5 +86,5 @@ Response Client::getResponce() {
 
     logger.log(GOT_RES_MESSEGE, res.to_string());
 
-    return {};
+    return res;
 }
