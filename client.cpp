@@ -13,7 +13,7 @@ int main() {
 
     auto res = client.getResponce();
 
-    std::cout << res.toString();
+    //std::cout << res.toString();
 
     Request req2{POST, "/"};
     req2.addHeader("Cookie", "name=Max; surname=Charlington");
@@ -23,6 +23,6 @@ int main() {
 
     res = client.getResponce();
 
-    std::cout << res.toString();
+    //std::cout << res.toString();
 
 }

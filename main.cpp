@@ -17,7 +17,7 @@ int main()
         },
         Route{
             "/test", GET,
-            [](auto req){
+            []([[maybe_unused]] auto req){
                 return "";
             }
         },
@@ -29,7 +29,7 @@ int main()
 
                 auto res = "Wow, seems that you POSTed " + std::to_string(req.content.length()) + "bytes. \r\n";
                 res += "Content was: " + req.content + "\r\n";
-                res += "Cookie name was: " + name;
+                res += "Cookie 'name' was: " + name;
                 return res;
             }
         }
