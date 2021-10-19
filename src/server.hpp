@@ -133,7 +133,7 @@ void Server::respond(size_t n)
 
         logger.log(NEW_REQ_MESSAGE, req.toString());
 
-        Response response;
+        Response response{"HTTP/1.1", 500, "Internal Server Error"};
         for (const auto& route : routes) {
             if (route.match(req)) {
                 try {
