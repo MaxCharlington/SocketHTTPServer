@@ -19,15 +19,71 @@
 
 constexpr auto newLine = "\r\n";
 
+
+// Unified helpers
+template <typename Message>
+void addContentImpl(Message& mes, std::string text) {
+    if (text != "") {
+        mes.content = std::move(text);
+        mes.headers.emplace_back("Content-Length", std::to_string(mes.content.length()));
+        mes.headers.emplace_back("Content-Type", "text/plain");
+    }
+}
+
+template <typename Message>
+std::string getMessageBodyImpl(Message& mes) {
+    std::string body;
+    if (mes.headers.size() > 0) {
+        body += newLine;
+        for (const auto& header : mes.headers) {
+            body += header.key + ": " + header.value + newLine;
+        }
+        if (mes.content.length() > 0) {
+            body += newLine;  // To remove
+            body += mes.content;
+        }
+    }
+    return body;
+}
+
+const char* getParamsImpl(const char* uri) {
+    if (char* params_ = strchr(const_cast<char*>(uri), '?'); params_) {
+        *params_++ = '\0'; //split URI   // ?
+        return params_;
+    }
+    return uri - 1;  //use an empty string
+}
+
+template <typename Message>
+const char* parceHeadersAndGetContent(Message& mes) {
+    const char *t = "";
+    while (true)
+    {
+        const char* key = strtok(nullptr, "\r\n: \t");
+        if (!key)
+            break;
+        const char* value = strtok(nullptr, "\r\n");
+        while (*value && *value == ' ')
+            value++;
+
+        mes.addHeader(key, value);
+
+        t = value + 1 + strlen(value);
+        if (t[1] == '\r' && t[2] == '\n') {  // ?
+            t += 3;  // ?
+            break;
+        }
+    }
+    return t;
+}
+
+
 struct Request {
-
     HTTPMethod method;
-    char* uri;       // before '?'
-    char* params;    // "a=1&b=2" things after  '?'
-    char* protocol;  // "HTTP/<version>"
-
-    using Header_t = Header<>;
-    std::vector<Header_t> headers;
+    const char* uri;       // before '?'
+    const char* params;    // "a=1&b=2" things after  '?'
+    const char* protocol;  // "HTTP/<version>"
+    Headers headers;
     std::string content;
 
     Request() = default;
@@ -45,37 +101,12 @@ Request::Request(char* req) {
     method = getHTTPMethod(strtok(req, " \t\r\n"));
     uri = strtok(nullptr, " \t");
     protocol = strtok(nullptr, " \t\r\n");
-
-    if (params = strchr(uri, '?'); params)
-        *params++ = '\0'; //split URI   // ?
-    else
-        params = uri - 1; //use an empty string
-
-    const char *t = "";
-    while (true)
-    {
-        const char* key = strtok(nullptr, "\r\n: \t");
-        if (!key)
-            break;
-        const char* value = strtok(nullptr, "\r\n");
-        while (*value && *value == ' ')
-            value++;
-        addHeader(key, value);
-        t = value + 1 + strlen(value);
-        if (t[1] == '\r' && t[2] == '\n') {  // ?
-            t += 3;  // ?
-            break;
-        }
-    }
-    content = t;
+    params = getParamsImpl(uri);
+    content = parceHeadersAndGetContent(*this);
 }
 
 std::string_view Request::getHeader(std::string_view key) {
-    for (auto& header : headers) {
-        if (header.key == key)
-            return header.value;
-    }
-    throw std::runtime_error(std::string("There is no header in request with key: ") + key);
+    return getHeaderImpl(headers, key);
 }
 
 void Request::addHeader(std::string key, std::string value) {
@@ -83,11 +114,7 @@ void Request::addHeader(std::string key, std::string value) {
 }
 
 void Request::addContent(std::string content_) {
-    if (content_ != "") {
-        content = std::move(content_);
-        headers.emplace_back("Content-Length", std::to_string(content.length()));
-        headers.emplace_back("Content-Type", "text/plain");
-    }
+    addContentImpl(*this, content_);
 }
 
 std::string Request::toString() const {
@@ -98,28 +125,16 @@ std::string Request::toString() const {
         return "";
     };
     auto req_str = getHTTPMethodStr(method) + ' ' + uri + get_params() + ' ' + protocol;
-    if (headers.size() > 0) {
-        req_str += newLine;
-        for (const auto& header : headers) {
-            req_str += header.key + ": " + header.value + newLine;
-        }
-        if (content.length() > 0) {
-            req_str += newLine;
-            req_str += content;
-        }
-    }
+    req_str += getMessageBodyImpl(*this);
     return req_str;
 }
 
 
 struct Response {
-    char* protocol;
+    const char* protocol;
     uint16_t status;
-    char* status_message;
-
-    using Header_t = Header<>;
-    std::vector<Header_t> headers;
-
+    const char* status_message;
+    Headers headers;
     std::string content;
 
     Response() = default;
@@ -138,31 +153,11 @@ Response::Response(char* res) {
     status = static_cast<uint16_t>(atoi(strtok(nullptr, " \t")));
     status_message = strtok(nullptr, "\t\r\n");
 
-    const char *t = "";
-    while (true)
-    {
-        const char* key = strtok(nullptr, "\r\n: \t");
-        if (!key)
-            break;
-        const char* value = strtok(nullptr, "\r\n");
-        while (*value && *value == ' ')
-            value++;
-        headers.emplace_back(key, value);
-        t = value + 1 + strlen(value);
-        if (t[1] == '\r' && t[2] == '\n') {  // ?
-            t += 3;  // ?
-            break;
-        }
-    }
-    content = t;
+    content = parceHeadersAndGetContent(*this);
 }
 
 std::string_view Response::getHeader(std::string_view key) {
-    for (auto& header : headers) {
-        if (header.key == key)
-            return header.value;
-    }
-    throw std::runtime_error(std::string("There is no header in request with key: ") + key);;
+    return getHeaderImpl(headers, key);
 }
 
 void Response::addHeader(std::string key, std::string value) {
@@ -170,24 +165,11 @@ void Response::addHeader(std::string key, std::string value) {
 }
 
 void Response::addContent(std::string content_) {
-    if (content_ != "") {
-        content = std::move(content_);
-        headers.emplace_back("Content-Length", std::to_string(content.length()));
-        headers.emplace_back("Content-Type", "text/plain");
-    }
+    addContentImpl(*this, content_);
 }
 
 std::string Response::toString() const {
     auto resp_str = std::string(protocol) + ' ' + std::to_string(status) + ' ' + status_message;
-    if (headers.size() > 0) {
-        resp_str += newLine;
-        for (const auto& header : headers) {
-            resp_str += header.key + ": " + header.value + newLine;
-        }
-        if (content.length() > 0) {
-            resp_str += newLine;
-            resp_str += content;
-        }
-    }
+    resp_str += getMessageBodyImpl(*this);
     return resp_str;
 }

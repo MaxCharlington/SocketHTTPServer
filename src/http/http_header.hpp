@@ -14,3 +14,15 @@ struct Header
     Header() = default;
     Header(key_type key_, value_type value_) : key{key_}, value{value_} {}
 };
+
+
+using Header_t = Header<>;
+using Headers = std::vector<Header_t>;
+
+std::string_view getHeaderImpl(const Headers& headers, std::string_view key) {
+    for (auto& header : headers) {
+        if (header.key == key)
+            return header.value;
+    }
+    return "";
+}
