@@ -9,7 +9,7 @@
 #include "rest.hpp"
 #include "http_header.hpp"
 #include "cookie.hpp"
-#include "../string_helpers.hpp"
+#include "../string_helper.hpp"
 
 /*
     Response and request objects are valid for the lifetime of content of recieved data buffer
@@ -93,6 +93,8 @@ struct Request {
 
     auto getHeader(std::string_view key) -> std::string_view;
     void addHeader(std::string key, std::string value);
+    void addHeader(Header_t header);
+    auto getParam(std::string_view key) const -> std::string_view;
     void addContent(std::string content_);
     auto toString() const -> std::string;
 };
@@ -111,6 +113,33 @@ std::string_view Request::getHeader(std::string_view key) {
 
 void Request::addHeader(std::string key, std::string value) {
     headers.emplace_back(std::move(key), std::move(value));
+}
+
+void Request::addHeader(Header_t header) {
+    headers.push_back(std::move(header));
+}
+
+std::string_view Request::getParam(std::string_view key) const {
+    const char value_delim = '=';
+    const char pair_delim = '&';
+
+    size_t start = 0;
+    size_t pos = 0;
+    std::string_view cur_key;
+
+    size_t param_length = strlen(params);
+    for (; pos < param_length; pos++)
+    {
+        if (params[pos] == value_delim) {
+            cur_key = std::string_view{params + start, pos - start};
+            start = pos + 1;
+        }
+        if (params[pos] == pair_delim) {
+            if (key == cur_key) return {params + start, pos - start};
+        }
+    }
+    if (key == cur_key) return {params + start, pos - start};
+    return "";
 }
 
 void Request::addContent(std::string content_) {
@@ -144,6 +173,7 @@ struct Response {
 
     auto getHeader(std::string_view key) -> std::string_view;
     void addHeader(std::string key, std::string value);
+    void addHeader(Header_t header);
     void addContent(std::string content_);
     auto toString() const -> std::string;
 };
@@ -162,6 +192,10 @@ std::string_view Response::getHeader(std::string_view key) {
 
 void Response::addHeader(std::string key, std::string value) {
     headers.emplace_back(std::move(key), std::move(value));
+}
+
+void Response::addHeader(Header_t header) {
+    headers.push_back(std::move(header));
 }
 
 void Response::addContent(std::string content_) {
