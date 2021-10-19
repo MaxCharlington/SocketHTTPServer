@@ -27,7 +27,7 @@ class Client {
     int sock = 0;
     sockaddr_in serv_addr;
     std::vector<char> buf;
-    
+
     void setup();
     void teardown();
 
@@ -36,7 +36,7 @@ public:
 
     void request(Request req);
     Response getResponce();
-    
+
 };
 
 void Client::setup() {
@@ -45,16 +45,16 @@ void Client::setup() {
         fprintf(stderr, "Socket creation error \n");
         exit(1);
     }
-   
+
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(PORT);
 
-    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) 
+    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0)
     {
         fprintf(stderr, "Invalid address/ Address not supported \n");
         exit(1);
     }
-   
+
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
         fprintf(stderr, "Connection Failed \n");
@@ -69,11 +69,11 @@ void Client::teardown() {
 
 void Client::request(Request req) {
     auto message = req.toString();
-    
+
     setup();
 
     logger.log(CREATE_REQ_MESSEGE, message);
-    
+
     send(sock, message.c_str(), message.length(), 0);
     size_t read_len = read(sock, buf.data(), buf.size() - 1);
     buf[read_len] = '\0';

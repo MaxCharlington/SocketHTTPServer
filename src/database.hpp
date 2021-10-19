@@ -28,7 +28,7 @@ void Database::setPassword(User current_user, std::string new_password){
         if (it == current_user)
         {
             it.password = new_password;
-        } 
+        }
         break;
     }
 }
@@ -72,11 +72,11 @@ std::vector<std::string> Database::getLines(std::string file_name)
 
 Database::~Database(){
     std::ofstream file(path);
-    for (auto it : users) {              
+    for (auto it : users) {
         if (it != users.back())
-            file << it.getStrRepr() << '\n';  
+            file << it.getStrRepr() << '\n';
         else
-            file << it.getStrRepr(); 
+            file << it.getStrRepr();
     }
     file.close();
 }
