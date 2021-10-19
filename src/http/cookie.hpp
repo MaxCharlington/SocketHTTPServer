@@ -64,10 +64,13 @@ public:
 
     Header_t getCookieHeader() const {
         std::string cookies_value;
-        for (auto[key, value] : m_cookies)
-            cookies_value += key + "=" + value + "; ";
-        cookies_value.resize(cookies_value.size() - 2);  // Remove last '; '
-        return {"Cookie", cookies_value};
+        if (m_cookies.size() > 0) {
+            for (auto[key, value] : m_cookies)
+                cookies_value += key + "=" + value + "; ";
+            cookies_value.resize(cookies_value.size() - 2);  // Remove last '; '
+            return {"Cookie", cookies_value};
+        }
+        return {};
     }
 
 

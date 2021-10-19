@@ -116,7 +116,8 @@ void Request::addHeader(std::string key, std::string value) {
 }
 
 void Request::addHeader(Header_t header) {
-    headers.push_back(std::move(header));
+    if (header.key != "")
+        headers.push_back(std::move(header));
 }
 
 std::string_view Request::getParam(std::string_view key) const {
