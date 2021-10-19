@@ -8,8 +8,8 @@
 class Database
 {
     std::vector<User> users;
-    std::string path;
-    std::vector<std::string> getLines(std::string db_file);
+    const std::string path;
+    std::vector<std::string> getLines();
 
 public:
     Database(std::string db_file);
@@ -49,17 +49,16 @@ void Database::addUser(User new_user)
         users.push_back(new_user);
 }
 
-Database::Database(std::string db_file)
+Database::Database(std::string db_file) : path{db_file}
 {
-    path = db_file;
-    for (auto line : getLines(db_file))
+    for (auto line : getLines())
         users.emplace_back(line);
 }
 
-std::vector<std::string> Database::getLines(std::string file_name)
+std::vector<std::string> Database::getLines()
 {
     std::vector<std::string> temp;
-    std::ifstream file(file_name);
+    std::ifstream file(path);
     while (!file.eof())
     {
         std::string line;

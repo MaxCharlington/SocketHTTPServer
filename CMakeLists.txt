@@ -23,3 +23,8 @@ target_compile_options(server.run PRIVATE ${WARNING_FLAGS} ${LANG_STANDARD})
 add_executable(client.run client.cpp)
 
 target_compile_options(client.run PRIVATE ${WARNING_FLAGS} ${LANG_STANDARD})
+
+
+# Database file installation
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/database/db.txt
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
