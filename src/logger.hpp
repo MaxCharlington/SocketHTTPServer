@@ -36,7 +36,12 @@ public:
     void log_format(const char* format, T... args) {
         static char buf[BUFFSIZE];
         snprintf(buf, BUFFSIZE, format, args...);
-        console << buf << "\n\n";
-        stream << buf << "\n\n";
+        log(buf);
+    }
+
+    // Outputs every step of chaining with newline
+    Logger& operator<<(auto arg) {
+        log(arg);
+        return *this;
     }
 };
