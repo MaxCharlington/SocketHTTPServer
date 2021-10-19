@@ -8,7 +8,10 @@ set(WARNING_FLAGS
     -Wall
     -Wextra
     -Wshadow
+    -Wno-write-strings
 )
+
+# set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG")
 
 # Leave it here for CMake 3.2 when it will be defaulted
 # set_property(TARGET server PROPERTY CXX_STANDARD 23)
