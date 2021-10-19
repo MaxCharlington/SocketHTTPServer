@@ -38,10 +38,12 @@ struct Route {
 
 // Logging
 Logger logger{};
-const char *START_MESSEGE = "\x1b[32m[Server started]\x1b[0m\n";
-const char *NEW_REQ_MESSEGE = "\x1b[32m[New request]\x1b[0m\n";
-const char *SENDING_RES_MESSEGE = "\x1b[32m[Sending response]\x1b[0m\n";
+const char *START_MESSAGE = "\x1b[32m[Server started]\x1b[0m\n";
+const char *NEW_REQ_MESSAGE = "\x1b[32m[New request]\x1b[0m\n";
+const char *SENDING_RES_MESSAGE = "\x1b[32m[Sending response]\x1b[0m\n";
 const char *ERROR_MESSAGE = "\x1b[31m[Error]\x1b[0m\n";
+const char *ACCEPTED_MESSAGE = "\x1b[32m[Accepted client]\x1b[0m\n";
+const char *RECIEVED_MESSAGE = "\x1b[32m[Recieved]\x1b[0m\n";
 
 class Server {
     constexpr static size_t CONNMAX = 100;
@@ -117,17 +119,19 @@ void Server::setup()
 void Server::respond(size_t n)
 {
     int clientfd = clients[n];
+
     if (int rcvd = recv(clientfd, buf.data(), BUFSIZE - 1, 0); rcvd < 0)
         fprintf(stderr, ("recv() error\n"));
     else if (rcvd == 0)
         fprintf(stderr, "Client disconnected upexpectedly.\n");
     else
     {
+        logger.log(RECIEVED_MESSAGE, rcvd, " bytes from client ", n);
+
         // Handling received message
-        buf[rcvd] = '\0';
         Request req{buf.data()};
 
-        logger.log(NEW_REQ_MESSEGE, req.toString());
+        logger.log(NEW_REQ_MESSAGE, req.toString());
 
         Response response;
         for (const auto& route : routes) {
@@ -145,7 +149,7 @@ void Server::respond(size_t n)
         }
         auto response_str = response.toString();
 
-        logger.log(SENDING_RES_MESSEGE, response_str);
+        logger.log(SENDING_RES_MESSAGE, response_str);
 
         write(clientfd, response_str.c_str(), response_str.length());
 
@@ -157,7 +161,7 @@ void Server::respond(size_t n)
 
 void Server::start()
 {
-    logger.log(START_MESSEGE, "http://127.0.0.1:", port.c_str());
+    logger.log(START_MESSAGE, "http://127.0.0.1:", port.c_str());
 
     signal(SIGCHLD, SIG_IGN);  // Ignore SIGCHLD to avoid zombie threads
 
@@ -166,6 +170,8 @@ void Server::start()
         sockaddr_in clientaddr;
         socklen_t addrlen = sizeof(clientaddr);
         clients[cur_client] = accept(listenfd, (sockaddr *)&clientaddr, &addrlen);
+
+        logger.log(ACCEPTED_MESSAGE, cur_client);
 
         if (clients[cur_client] == -1)
         {

@@ -7,21 +7,22 @@ using enum HTTPMethod;
 int main() {
     Client client{};
 
-    Request req{POST, "/"};
-    req.addHeader("User-Agent", "ConsoleApplication");
-    req.addHeader("Cookie", "name=Max; surname=Charlington");
+    Request req{GET, "/test"};
 
-    req.addContent("Some content");
     client.request(req);
 
     auto res = client.getResponce();
 
     std::cout << res.toString();
 
-    Request req2{GET, "/"};
+    Request req2{POST, "/"};
+    req2.addHeader("Cookie", "name=Max; surname=Charlington");
+    req2.addContent("Some content");
+
     client.request(req2);
 
     res = client.getResponce();
 
     std::cout << res.toString();
+
 }

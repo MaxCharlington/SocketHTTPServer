@@ -33,7 +33,7 @@ struct Request {
     Request() = default;
     Request(char* req);
     Request(HTTPMethod method_, char* uri_, char* params_ = "", char* protocol_ = "HTTP/1.1")
-        : method{method_}, uri{uri_}, params{params_}, protocol{protocol_}, headers{}, content{} {}
+        : method{method_}, uri{uri_}, params{params_}, protocol{protocol_} {}
 
     auto getHeader(std::string_view key) -> std::string_view;
     void addHeader(std::string key, std::string value);
@@ -51,7 +51,7 @@ Request::Request(char* req) {
     else
         params = uri - 1; //use an empty string
 
-    const char *t;
+    const char *t = "";
     while (true)
     {
         const char* key = strtok(nullptr, "\r\n: \t");
@@ -83,9 +83,11 @@ void Request::addHeader(std::string key, std::string value) {
 }
 
 void Request::addContent(std::string content_) {
-    content = std::move(content_);
-    headers.emplace_back("Content-Length", std::to_string(content.length()));
-    headers.emplace_back("Content-Type", "text/plain");
+    if (content_ != "") {
+        content = std::move(content_);
+        headers.emplace_back("Content-Length", std::to_string(content.length()));
+        headers.emplace_back("Content-Type", "text/plain");
+    }
 }
 
 std::string Request::toString() const {
@@ -95,12 +97,17 @@ std::string Request::toString() const {
         }
         return "";
     };
-    auto req_str = getHTTPMethodStr(method) + ' ' + uri + get_params() + ' ' + protocol + newLine;
-    for (const auto& header : headers) {
-        req_str += std::string(header.key) + ": " + header.value + newLine;
+    auto req_str = getHTTPMethodStr(method) + ' ' + uri + get_params() + ' ' + protocol;
+    if (headers.size() > 0) {
+        req_str += newLine;
+        for (const auto& header : headers) {
+            req_str += header.key + ": " + header.value + newLine;
+        }
+        if (content.length() > 0) {
+            req_str += newLine;
+            req_str += content;
+        }
     }
-    req_str += newLine;
-    req_str += content;
     return req_str;
 }
 
@@ -117,7 +124,7 @@ struct Response {
 
     Response() = default;
     Response(char* protocol_, uint16_t status_, char* status_message_)
-        : protocol{protocol_}, status{status_}, status_message{status_message_}, headers{}, content{} {}
+        : protocol{protocol_}, status{status_}, status_message{status_message_} {}
     Response(char* res);
 
     auto getHeader(std::string_view key) -> std::string_view;
@@ -131,7 +138,7 @@ Response::Response(char* res) {
     status = static_cast<uint16_t>(atoi(strtok(nullptr, " \t")));
     status_message = strtok(nullptr, "\t\r\n");
 
-    const char *t;
+    const char *t = "";
     while (true)
     {
         const char* key = strtok(nullptr, "\r\n: \t");
@@ -142,8 +149,8 @@ Response::Response(char* res) {
             value++;
         headers.emplace_back(key, value);
         t = value + 1 + strlen(value);
-        if (t[1] == '\r' && t[2] == '\n') {
-            t += 3;
+        if (t[1] == '\r' && t[2] == '\n') {  // ?
+            t += 3;  // ?
             break;
         }
     }
@@ -163,17 +170,24 @@ void Response::addHeader(std::string key, std::string value) {
 }
 
 void Response::addContent(std::string content_) {
-    content = std::move(content_);
-    headers.emplace_back("Content-Length", std::to_string(content.length()));
-    headers.emplace_back("Content-Type", "text/plain");
+    if (content_ != "") {
+        content = std::move(content_);
+        headers.emplace_back("Content-Length", std::to_string(content.length()));
+        headers.emplace_back("Content-Type", "text/plain");
+    }
 }
 
 std::string Response::toString() const {
-    auto resp_str = std::string(protocol) + ' ' + std::to_string(status) + ' ' + status_message + newLine;
-    for (const auto& header : headers) {
-        resp_str += header.key + ": " + header.value + newLine;
+    auto resp_str = std::string(protocol) + ' ' + std::to_string(status) + ' ' + status_message;
+    if (headers.size() > 0) {
+        resp_str += newLine;
+        for (const auto& header : headers) {
+            resp_str += header.key + ": " + header.value + newLine;
+        }
+        if (content.length() > 0) {
+            resp_str += newLine;
+            resp_str += content;
+        }
     }
-    resp_str += newLine;
-    resp_str += content;
     return resp_str;
 }

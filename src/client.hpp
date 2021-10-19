@@ -11,14 +11,16 @@
 #include <cstdio>
 #include <unistd.h>
 #include <cstring>
+#include <cassert>
 
 #include "http/http.hpp"
 #include "logger.hpp"
 
 // Logging
 Logger logger{};
-const char *CREATE_REQ_MESSEGE = "\x1b[32m[Sending new request]\x1b[0m\n";
-const char *GOT_RES_MESSEGE = "\x1b[32m[Got response]\x1b[0m\n";
+const char *CREATE_REQ_MESSAGE = "\x1b[32m[Sending new request]\x1b[0m\n";
+const char *SENT_MESSAGE = "\x1b[32m[Sent]\x1b[0m\n";
+const char *GOT_RES_MESSAGE = "\x1b[32m[Got response]\x1b[0m\n";
 
 class Client {
     constexpr static size_t BUFSIZE = 65535;
@@ -72,10 +74,16 @@ void Client::request(Request req) {
 
     setup();
 
-    logger.log(CREATE_REQ_MESSEGE, message);
+    logger.log(CREATE_REQ_MESSAGE, message);
 
-    send(sock, message.c_str(), message.length(), 0);
+    size_t send_len = send(sock, message.c_str(), message.length(), 0);
+    assert(send_len > 0);
+
+    logger.log(SENT_MESSAGE, send_len, " bytes");
+
     size_t read_len = read(sock, buf.data(), buf.size() - 1);
+    assert(read_len > 0);
+
     buf[read_len] = '\0';
 
     teardown();
@@ -84,7 +92,7 @@ void Client::request(Request req) {
 Response Client::getResponce() {
     Response res{buf.data()};
 
-    logger.log(GOT_RES_MESSEGE, res.toString());
+    logger.log(GOT_RES_MESSAGE, res.toString());
 
     return res;
 }

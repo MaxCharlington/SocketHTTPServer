@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 
 // Logger class helper to log nowhere
