@@ -7,20 +7,15 @@
 #include <cstring>
 
 #include "rest.hpp"
+#include "http_header.hpp"
+#include "cookie.hpp"
+#include "../string_helpers.hpp"
 
-template <typename KeyT = std::string, typename ValueT = std::string>
-struct Header
-{
-    using key_type = KeyT;
-    using value_type = ValueT;
-
-    KeyT key;
-    ValueT value;
-
-    Header() = default;
-    Header(key_type key_, value_type value_) : key{key_}, value{value_} {}
-};
-
+/*
+    Response and request objects are valid for the lifetime of content of recieved data buffer
+    Add temporary storage for buffer and replace pointers with string_views pionting to copied
+    buffer
+*/
 
 constexpr auto newLine = "\r\n";
 
