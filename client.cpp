@@ -7,7 +7,7 @@ using enum HTTPMethod;
 int main() {
     Client client{};
 
-    Request req{GET, "/test"};
+    Request req{GET, "/test?name=Max"};
 
     client.request(req);
 
@@ -15,7 +15,7 @@ int main() {
 
     //std::cout << res.toString();
 
-    Request req2{POST, "/"};
+    Request req2{POST, "/test"};
     req2.addHeader("Cookie", "name=Max; surname=Charlington");
     req2.addContent("Some content");
 
@@ -24,5 +24,4 @@ int main() {
     res = client.getResponce();
 
     //std::cout << res.toString();
-
 }
