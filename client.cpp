@@ -9,7 +9,8 @@ int main() {
 
     Request req{POST, "/"};
     req.addHeader("User-Agent", "ConsoleApplication");
-    
+    req.addHeader("Cookie", "name=Max; surname=Charlington");
+
     req.addContent("Some content");
     client.request(req);
 
@@ -18,7 +19,7 @@ int main() {
     std::cout << res.toString();
 
     Request req2{GET, "/"};
-    client.request(req);
+    client.request(req2);
 
     res = client.getResponce();
 

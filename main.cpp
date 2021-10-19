@@ -18,8 +18,11 @@ int main()
         Route{
             "/", POST,
             [](auto req){
+                Cookie cookie{req.getHeader("Cookie")};
+                auto name = cookie.getCookie("name");
                 auto res = "Wow, seems that you POSTed " + std::to_string(req.content.length()) + "bytes. \r\n";
-                res += "Content was: " + req.content;
+                res += "Content was: " + req.content + "\r\n";
+                res += "Cookie name was: " + name;
                 return res;
             }
         }

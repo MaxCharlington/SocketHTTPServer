@@ -25,7 +25,7 @@ struct Request {
     char* uri;       // before '?'
     char* params;    // "a=1&b=2" things after  '?'
     char* protocol;  // "HTTP/<version>"
-    
+
     using Header_t = Header<>;
     std::vector<Header_t> headers;
     std::string content;
@@ -35,7 +35,7 @@ struct Request {
     Request(HTTPMethod method_, char* uri_, char* params_ = "", char* protocol_ = "HTTP/1.1")
         : method{method_}, uri{uri_}, params{params_}, protocol{protocol_}, headers{}, content{} {}
 
-    auto getHeader(std::string_view key) -> Request::Header_t::value_type;
+    auto getHeader(std::string_view key) -> std::string_view;
     void addHeader(std::string key, std::string value);
     void addContent(std::string content_);
     auto toString() const -> std::string;
@@ -70,12 +70,12 @@ Request::Request(char* req) {
     content = t;
 }
 
-Request::Header_t::value_type Request::getHeader(std::string_view key) {
-    for (auto header : headers) {
+std::string_view Request::getHeader(std::string_view key) {
+    for (auto& header : headers) {
         if (header.key == key)
             return header.value;
     }
-    return "";
+    throw std::runtime_error(std::string("There is no header in request with key: ") + key);
 }
 
 void Request::addHeader(std::string key, std::string value) {
@@ -120,7 +120,7 @@ struct Response {
         : protocol{protocol_}, status{status_}, status_message{status_message_}, headers{}, content{} {}
     Response(char* res);
 
-    auto getHeader(std::string_view key) -> Response::Header_t::value_type;
+    auto getHeader(std::string_view key) -> std::string_view;
     void addHeader(std::string key, std::string value);
     void addContent(std::string content_);
     auto toString() const -> std::string;
@@ -128,7 +128,7 @@ struct Response {
 
 Response::Response(char* res) {
     protocol = strtok(res, " \t");
-    status = static_cast<uint8_t>(atoi(strtok(nullptr, " \t")));
+    status = static_cast<uint16_t>(atoi(strtok(nullptr, " \t")));
     status_message = strtok(nullptr, "\t\r\n");
 
     const char *t;
@@ -150,12 +150,12 @@ Response::Response(char* res) {
     content = t;
 }
 
-Response::Header_t::value_type Response::getHeader(std::string_view key) {
-    for (auto header : headers) {
+std::string_view Response::getHeader(std::string_view key) {
+    for (auto& header : headers) {
         if (header.key == key)
             return header.value;
     }
-    return "";
+    throw std::runtime_error(std::string("There is no header in request with key: ") + key);;
 }
 
 void Response::addHeader(std::string key, std::string value) {
