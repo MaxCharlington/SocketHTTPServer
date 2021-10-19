@@ -157,6 +157,7 @@ void Server::respond(size_t n)
         close(clientfd);
     }
     clients[n] = -1;
+    // In sinchronous code add messege zeroing out
 }
 
 void Server::start()
