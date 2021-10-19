@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <string>
+#include <stdexcept>
 #include <vector>
 #include <array>
 #include <functional>
@@ -37,8 +38,10 @@ struct Route {
 
 // Logging
 Logger logger{};
+const char *START_MESSEGE = "\x1b[32m[Server started]\x1b[0m\n";
 const char *NEW_REQ_MESSEGE = "\x1b[32m[New request]\x1b[0m\n";
-const char *CREATE_RES_MESSEGE = "\x1b[32m[Sending response]\x1b[0m\n";
+const char *SENDING_RES_MESSEGE = "\x1b[32m[Sending response]\x1b[0m\n";
+const char *ERROR_MESSAGE = "\x1b[31m[Error]\x1b[0m\n";
 
 class Server {
     constexpr static size_t CONNMAX = 100;
@@ -50,9 +53,9 @@ class Server {
 
     int listenfd;
     size_t cur_client = 0;
-    std::array<int, CONNMAX> clients;  
+    std::array<int, CONNMAX> clients;
     std::vector<char> buf;
-    
+
     void setup();
     void respond(size_t n);
 
@@ -69,7 +72,7 @@ public:
 void Server::setup()
 {
     std::ranges::fill(clients, -1);
-    
+
     addrinfo hints;
     memset(&hints, 0, sizeof(hints));
 
@@ -118,7 +121,7 @@ void Server::respond(size_t n)
         fprintf(stderr, ("recv() error\n"));
     else if (rcvd == 0)
         fprintf(stderr, "Client disconnected upexpectedly.\n");
-    else 
+    else
     {
         // Handling received message
         buf[rcvd] = '\0';
@@ -126,20 +129,23 @@ void Server::respond(size_t n)
 
         logger.log(NEW_REQ_MESSEGE, req.toString());
 
-        Response response{"HTTP/1.1", 500, "Internal Server Error"};
+        Response response;
         for (const auto& route : routes) {
             if (route.match(req)) {
                 try {
                     response = Response{"HTTP/1.1", 200, "OK"};
                     response.addContent(route.handler(req));
                 }
-                catch (...) {}
+                catch (std::exception& e) {
+                    logger.log(ERROR_MESSAGE, "Request handler thrown an exeption: ", e.what());
+                    response = Response{"HTTP/1.1", 500, "Internal Server Error"};
+                }
                 break;
             }
         }
         auto response_str = response.toString();
 
-        logger.log(CREATE_RES_MESSEGE, response_str);
+        logger.log(SENDING_RES_MESSEGE, response_str);
 
         write(clientfd, response_str.c_str(), response_str.length());
 
@@ -151,7 +157,7 @@ void Server::respond(size_t n)
 
 void Server::start()
 {
-    printf("Server started \033[92mhttp://127.0.0.1:%s\033[0m\n", port.c_str());
+    logger.log(START_MESSEGE, "http://127.0.0.1:", port.c_str());
 
     signal(SIGCHLD, SIG_IGN);  // Ignore SIGCHLD to avoid zombie threads
 
