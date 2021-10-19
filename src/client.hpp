@@ -21,6 +21,7 @@ Logger logger{};
 const char *CREATE_REQ_MESSAGE = "\x1b[32m[Sending new request]\x1b[0m\n";
 const char *SENT_MESSAGE = "\x1b[32m[Sent]\x1b[0m\n";
 const char *GOT_RES_MESSAGE = "\x1b[32m[Got response]\x1b[0m\n";
+const char *NEW_COOKIE_MESSAGE = "\x1b[32m[Got new cookie]\x1b[0m\n";
 
 class Client {
     constexpr static size_t BUFSIZE = 65535;
@@ -29,6 +30,7 @@ class Client {
     int sock = 0;
     sockaddr_in serv_addr;
     std::vector<char> buf;
+    Cookies cookies;
 
     void setup();
     void teardown();
@@ -70,6 +72,7 @@ void Client::teardown() {
 }
 
 void Client::request(Request req) {
+    req.addHeader(cookies.getCookieHeader());
     auto message = req.toString();
 
     setup();
@@ -93,6 +96,15 @@ Response Client::getResponce() {
     Response res{buf.data()};
 
     logger.log(GOT_RES_MESSAGE, res.toString());
+
+    auto cookie_to_save = res.getHeader("SetCookie");
+    if (cookie_to_save.length() > 0) {
+        Cookie c = Cookies::getCookieFromSetHeader(cookie_to_save);
+
+        logger.log(NEW_COOKIE_MESSAGE, c.first, c.second);
+
+        cookies.setCookie(c);
+    }
 
     return res;
 }
