@@ -5,18 +5,18 @@
 
 struct User
 {
-    std::string username;
+    std::string login;
     std::string password;
     std::string role;
 
-    User(std::string username_, std::string password_, std::string role_)
-        : username{std::move(username_)}, password{std::move(password_)}, role{std::move(role_)} {}
+    User(auto username_, auto password_, auto role_)
+        : login{std::move(std::string{username_})}, password{std::move(std::string{password_})}, role{std::move(std::string{role_})} {}
 
     User(std::string db_line);
 
     std::string getStrRepr()
     {
-        return username + ' ' + password + ' ' + role;
+        return login + ' ' + password + ' ' + role;
     }
 
     auto operator<=>(const User &) const = default;
@@ -30,7 +30,7 @@ User::User(std::string db_line)
         if (it != ' ')
         {
             if (infoCounter == 0)
-                username += it;
+                login += it;
             else if (infoCounter == 1)
                 password += it;
             else
