@@ -19,8 +19,8 @@
 
 constexpr auto newLine = "\r\n";
 
-
-// Unified helpers
+// Common impl that encapsulates dirty C-like logic
+// May be move to separate friend class
 template <typename Message>
 void addContentImpl(Message& mes, std::string text) {
     if (text != "") {
@@ -35,8 +35,8 @@ std::string getMessageBodyImpl(Message& mes) {
     std::string body;
     if (mes.headers.size() > 0) {
         body += newLine;
-        for (const auto& header : mes.headers) {
-            body += header.key + ": " + header.value + newLine;
+        for (const auto& [key, value] : mes.headers) {
+            body += key + ": " + value + newLine;
         }
         if (mes.content.length() > 0) {
             body += newLine;  // To remove
@@ -96,6 +96,7 @@ struct Request {
     void addHeader(Header_t header);
     auto getParam(std::string_view key) const -> std::string_view;
     void addContent(std::string content_);
+    auto getContent() const -> std::string;
     auto toString() const -> std::string;
 };
 
@@ -147,6 +148,10 @@ void Request::addContent(std::string content_) {
     addContentImpl(*this, content_);
 }
 
+std::string Request::getContent() const {
+    return content;
+}
+
 std::string Request::toString() const {
     auto get_params = [&]() -> std::string {
         if (strlen(params) > 0) {
@@ -173,12 +178,13 @@ struct Response {
         : protocol{protocol_}, status{status_}, status_message{status_message_} {}
     Response(char* res);
 
-    explicit Response(std::string content);
+    explicit Response(std::string content_);  // Quick response
 
     auto getHeader(std::string_view key) const -> std::string_view;
     void addHeader(std::string key, std::string value);
     void addHeader(Header_t header);
-    void addContent(std::string content_);  // Quick response
+    void addContent(std::string content_);
+    auto getContent() const -> std::string;
     auto toString() const -> std::string;
 };
 
@@ -208,6 +214,10 @@ void Response::addHeader(Header_t header) {
 
 void Response::addContent(std::string content_) {
     addContentImpl(*this, content_);
+}
+
+std::string Response::getContent() const {
+    return content;
 }
 
 std::string Response::toString() const {

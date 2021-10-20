@@ -15,34 +15,47 @@ int main()
     Server s{3000,
         Route{
             "/register", GET,
-            []([[maybe_unused]] auto req){
-                return "";
+            [&](auto req){
+                auto login = req.getParam("login");
+                auto pass = req.getParam("pass");
+                auto role = req.getParam("role");
+                auto new_user = User{login, pass, role};
+                if (!db.isPresent(new_user.login)) {
+                    Response res{};
+                    User& user = db.addUser(new_user);
+                    auto id = auth.authorize(user);
+                    res = Response{"HTTP/1.1", 200, "OK"};
+                    res.addHeader(Cookies::getSetCookieHeader("id", std::to_string(id)));
+                    return res;
+                }
+                return Response{};
             }
         },
         Route{
             "/login", GET,
-            []([[maybe_unused]] auto req){
-                return "";
+            [&](auto req){
+                auto login = req.getParam("login");
+                auto pass = req.getParam("pass");
+                if (db.rightPassword(login, pass)) {
+                    Response res{};
+                    User& user = db.getUser(login);
+                    auto id = auth.authorize(user);
+                    res = Response{"HTTP/1.1", 200, "OK"};
+                    res.addHeader(Cookies::getSetCookieHeader("id", std::to_string(id)));
+                    return res;
+                }
+                return Response{};
             }
         },
-
-        // Sample routes
         Route{
-            "/test", GET,
-            [](auto req){
-                return "Hello! You are using "s + req.getHeader("User-Agent") + "\r\n" + "Param 'name' was: " + req.getParam("name");
-            }
-        },
-        Route{
-            "/test", POST,
-            [](auto req){
+            "/data", GET,
+            [&](auto req){
                 Cookies cookies{req.getHeader("Cookie")};
-                auto name = cookies.getCookie("name");
-
-                auto res = "Wow, seems that you POSTed " + std::to_string(req.content.length()) + "bytes. \r\n";
-                res += "Content was: " + req.content + "\r\n";
-                res += "Cookie 'name' was: " + name;
-                return res;
+                auto id = std::stoull(cookies.getCookie("id"));
+                if (auth.isAuthorized(id)) {
+                    return Response{"Some very useful data"s};
+                }
+                return Response{"HTTP/1.1", 401, "Unauthorized"};;
             }
         }
     };
