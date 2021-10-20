@@ -29,7 +29,7 @@
 struct Route {
     std::string_view uri;
     HTTPMethod method;
-    std::function<std::string(Request)> handler;
+    std::function<Response(Request)> handler;
 
     constexpr bool match(const Request& req) const {
         return uri == req.uri && method == req.method;
@@ -133,12 +133,11 @@ void Server::respond(size_t n)
 
         logger.log(NEW_REQ_MESSAGE, req.toString());
 
-        Response response{"HTTP/1.1", 500, "Internal Server Error"};
+        Response response{};
         for (const auto& route : routes) {
             if (route.match(req)) {
                 try {
-                    response = Response{"HTTP/1.1", 200, "OK"};
-                    response.addContent(route.handler(req));
+                    response = route.handler(req);
                 }
                 catch (std::exception& e) {
                     logger.log(ERROR_MESSAGE, "Request handler thrown an exeption: ", e.what());
