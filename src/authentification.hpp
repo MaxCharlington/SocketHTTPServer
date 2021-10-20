@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <chrono>
 #include <functional>
+#include <algorithm>
 
 #include "database/database.hpp"
 #include "database/user.hpp"
@@ -21,7 +22,7 @@ public:
     Auth(Database& db) : m_db{db} {}
 
     bool isAuthorized(size_t id) const {
-        return m_auth_users.count(id) == 1;
+        return std::find_if(m_auth_users.begin(), m_auth_users.end(), [&](auto user){return user.first == id;}) != m_auth_users.end();
     }
 
     size_t authorize(const User& user) {
