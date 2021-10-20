@@ -27,7 +27,6 @@ public:
         constexpr std::string_view pair_delim{"; "};
 
         std::string_view key;
-        std::string_view value;
         size_t start = 0;
         size_t pos = 0;
 
@@ -38,20 +37,17 @@ public:
                 start = pos + value_delim.length();
             }
             if (std::string_view{&cookie_header_value[pos], pair_delim.length()} == pair_delim) {
-                value = std::string_view{cookie_header_value.data() + start, pos - start};
-                m_cookies[key] = value;
+                m_cookies[key] = std::string_view{cookie_header_value.data() + start, pos - start};
                 start = pos + pair_delim.length();
             }
         }
-        value = std::string_view{cookie_header_value.data() + start, pos - start};
-        m_cookies[key] = value;
+        m_cookies[key] = std::string_view{cookie_header_value.data() + start, pos - start};
     }
+
     Cookies(std::initializer_list<decltype(m_cookies)::value_type> il) : m_cookies{il} {}
 
     std::string getCookie(std::string_view key) const {
-        auto val = m_cookies.at(key);
-
-        return std::string{val};
+        return std::string{m_cookies.at(key)};
     }
 
     void setCookie(std::string_view key, std::string_view value) {
@@ -65,12 +61,16 @@ public:
     Header_t getCookieHeader() const {
         std::string cookies_value;
         if (m_cookies.size() > 0) {
-            for (auto[key, value] : m_cookies)
+            for (const auto& [key, value] : m_cookies)
                 cookies_value += key + "=" + value + "; ";
             cookies_value.resize(cookies_value.size() - 2);  // Remove last '; '
             return {"Cookie", cookies_value};
         }
         return {};
+    }
+
+    static Header_t getSetCookieHeader(std::string key, std::string value) {
+        return {"SetCookie", key + '=' + value};
     }
 
 
