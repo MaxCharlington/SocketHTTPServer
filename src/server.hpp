@@ -146,8 +146,6 @@ void Server::respond(size_t n)
                 break;
             }
         }
-        logger.log("Handler ran successfully");
-
         auto response_str = response.toString();
 
         logger.log(SENDING_RES_MESSAGE, response_str);
