@@ -14,7 +14,7 @@ enum struct HTTPMethod {
 };
 constexpr auto HTTPMethodStrs = std::array<const char*, 4>{"GET", "POST", "PUT", "DELETE"};
 
-HTTPMethod getHTTPMethod(std::string_view method) {
+constexpr HTTPMethod getHTTPMethod(std::string_view method) {
     for (size_t i = 0; i < HTTPMethodStrs.size(); i++) {
         if (HTTPMethodStrs[i] == method) {
             return static_cast<HTTPMethod>(i);
@@ -23,6 +23,6 @@ HTTPMethod getHTTPMethod(std::string_view method) {
     throw std::runtime_error(std::string("Unknown HTTP method ") + method.data());  // method.data() should be properly terminated
 }
 
-std::string getHTTPMethodStr(HTTPMethod method) {
+constexpr std::string_view getHTTPMethodStr(HTTPMethod method) {
     return HTTPMethodStrs[std::to_underlying(method)];
 }
