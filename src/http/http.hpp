@@ -91,7 +91,7 @@ struct Request {
     Request(HTTPMethod method_, char* uri_, char* params_ = "", char* protocol_ = "HTTP/1.1")
         : method{method_}, uri{uri_}, params{params_}, protocol{protocol_} {}
 
-    auto getHeader(std::string_view key) -> std::string_view;
+    auto getHeader(std::string_view key) const -> std::string_view;
     void addHeader(std::string key, std::string value);
     void addHeader(Header_t header);
     auto getParam(std::string_view key) const -> std::string_view;
@@ -107,7 +107,7 @@ Request::Request(char* req) {
     content = parceHeadersAndGetContent(*this);
 }
 
-std::string_view Request::getHeader(std::string_view key) {
+std::string_view Request::getHeader(std::string_view key) const {
     return getHeaderImpl(headers, key);
 }
 
@@ -167,15 +167,18 @@ struct Response {
     Headers headers;
     std::string content;
 
-    Response() = default;
+    Response()
+        : protocol{"HTTP/1.1"}, status{500}, status_message{"Internal Server Error"} {}
     Response(char* protocol_, uint16_t status_, char* status_message_)
         : protocol{protocol_}, status{status_}, status_message{status_message_} {}
     Response(char* res);
 
-    auto getHeader(std::string_view key) -> std::string_view;
+    explicit Response(std::string content);
+
+    auto getHeader(std::string_view key) const -> std::string_view;
     void addHeader(std::string key, std::string value);
     void addHeader(Header_t header);
-    void addContent(std::string content_);
+    void addContent(std::string content_);  // Quick response
     auto toString() const -> std::string;
 };
 
@@ -187,7 +190,11 @@ Response::Response(char* res) {
     content = parceHeadersAndGetContent(*this);
 }
 
-std::string_view Response::getHeader(std::string_view key) {
+Response::Response(std::string content_) : protocol{"HTTP/1.1"}, status{200}, status_message{"OK"} {
+    addContent(content_);
+}
+
+std::string_view Response::getHeader(std::string_view key) const {
     return getHeaderImpl(headers, key);
 }
 
