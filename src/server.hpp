@@ -146,6 +146,8 @@ void Server::respond(size_t n)
                 break;
             }
         }
+        logger.log("Handler ran successfully");
+
         auto response_str = response.toString();
 
         logger.log(SENDING_RES_MESSAGE, response_str);
@@ -156,7 +158,8 @@ void Server::respond(size_t n)
         close(clientfd);
     }
     clients[n] = -1;
-    // In sinchronous code add messege zeroing out
+
+    std::ranges::fill(buf, '\0');
 }
 
 void Server::start()
@@ -176,18 +179,24 @@ void Server::start()
         if (clients[cur_client] == -1)
         {
             perror("accept() error");
+            continue;
         }
-        else if (fork() == 0)
-        {
-            // New process
-            respond(cur_client);
-            exit(0);
-        }
-        else {
-            // Current process
-            while (clients[cur_client] != -1) {
-                cur_client = (cur_client + 1) % CONNMAX;
-            }
+        /* --------- Async --------- */
+        // else if (fork() == 0)
+        // {
+        //     // New process
+        //     respond(cur_client);
+        //     exit(0);
+        // }
+        // else {
+        //     // Current process
+        //     while (clients[cur_client] != -1) {
+        //         cur_client = (cur_client + 1) % CONNMAX;
+        //     }
+        // }
+        respond(cur_client);
+        while (clients[cur_client] != -1) {
+            cur_client = (cur_client + 1) % CONNMAX;
         }
     }
 }
