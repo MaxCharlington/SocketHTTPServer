@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(HTTPSocketServer)
 
-add_executable(server.run main.cpp)
+add_executable(server.run server.cpp)
 
 set(WARNING_FLAGS
     -Wall
