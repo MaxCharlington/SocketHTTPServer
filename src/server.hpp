@@ -6,7 +6,6 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <fcntl.h>
-#include <signal.h>
 
 #include <cstdio>
 #include <cstring>
@@ -53,7 +52,7 @@ class Server {
     const std::string port;
     std::vector<Route> routes;
 
-    int listenfd;
+    int socketfd;
     size_t cur_client = 0;
     std::array<int, CONNMAX> clients;
     std::vector<char> buf;
@@ -63,7 +62,9 @@ class Server {
 
 public:
     template<typename... Routes>
-    Server(uint16_t port_, Routes... routes_) : port{std::to_string(port_)}, routes{sizeof...(Routes)}, buf(BUFSIZE, 0) {
+    Server(uint16_t port_, Routes... routes_)
+        : port{std::to_string(port_)}, routes{sizeof...(Routes)}, buf(BUFSIZE, 0)
+    {
         (routes.push_back(std::forward<Routes>(routes_)), ...);
         setup();
     }
@@ -93,12 +94,12 @@ void Server::setup()
     addrinfo* p;
     for (p = res; p != nullptr; p = p->ai_next)
     {
-        int option{1};
-        listenfd = socket(p->ai_family, p->ai_socktype, 0);
-        setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
-        if (listenfd == -1)
+        int option;
+        socketfd = socket(p->ai_family, p->ai_socktype, 0);
+        setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+        if (socketfd == -1)
             continue;
-        if (bind(listenfd, p->ai_addr, p->ai_addrlen) == 0)
+        if (bind(socketfd, p->ai_addr, p->ai_addrlen) == 0)
             break;
     }
     if (p == nullptr)
@@ -109,10 +110,34 @@ void Server::setup()
 
     freeaddrinfo(res);
 
-    if (listen(listenfd, CONNMAXPERSOCK) != 0)
+    if (listen(socketfd, CONNMAXPERSOCK) != 0)
     {
         perror("listen error");
         exit(1);
+    }
+}
+
+void Server::start()
+{
+    logger.log(START_MESSAGE, "http://127.0.0.1:", port.c_str());
+
+    while (true)
+    {
+        sockaddr_in clientaddr;
+        socklen_t addrlen = sizeof(clientaddr);
+        clients[cur_client] = accept(socketfd, (sockaddr *)&clientaddr, &addrlen);
+
+        logger.log(ACCEPTED_MESSAGE, cur_client);
+
+        if (clients[cur_client] == -1)
+        {
+            perror("accept() error");
+            continue;
+        }
+        respond(cur_client);
+        while (clients[cur_client] != -1) {
+            cur_client = (cur_client + 1) % CONNMAX;
+        }
     }
 }
 
@@ -158,43 +183,4 @@ void Server::respond(size_t n)
     clients[n] = -1;
 
     std::ranges::fill(buf, '\0');
-}
-
-void Server::start()
-{
-    logger.log(START_MESSAGE, "http://127.0.0.1:", port.c_str());
-
-    signal(SIGCHLD, SIG_IGN);  // Ignore SIGCHLD to avoid zombie threads
-
-    while (true)
-    {
-        sockaddr_in clientaddr;
-        socklen_t addrlen = sizeof(clientaddr);
-        clients[cur_client] = accept(listenfd, (sockaddr *)&clientaddr, &addrlen);
-
-        logger.log(ACCEPTED_MESSAGE, cur_client);
-
-        if (clients[cur_client] == -1)
-        {
-            perror("accept() error");
-            continue;
-        }
-        /* --------- Async --------- */
-        // else if (fork() == 0)
-        // {
-        //     // New process
-        //     respond(cur_client);
-        //     exit(0);
-        // }
-        // else {
-        //     // Current process
-        //     while (clients[cur_client] != -1) {
-        //         cur_client = (cur_client + 1) % CONNMAX;
-        //     }
-        // }
-        respond(cur_client);
-        while (clients[cur_client] != -1) {
-            cur_client = (cur_client + 1) % CONNMAX;
-        }
-    }
 }

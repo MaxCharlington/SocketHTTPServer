@@ -13,7 +13,7 @@ class Database
     const std::string path;
 
 public:
-    Database(std::string db_file);
+    Database(std::string_view db_file);
     ~Database();
 
     bool isPresent(const User &) const;
@@ -70,7 +70,7 @@ User& Database::getUser(std::string_view login) {
     return *std::find_if(users.begin(), users.end(), [&](auto user){return user.login == login;});
 }
 
-Database::Database(std::string db_file) : path{db_file}
+Database::Database(std::string_view db_file) : path{db_file}
 {
     for (auto line : getLines())
         users.emplace_back(line);

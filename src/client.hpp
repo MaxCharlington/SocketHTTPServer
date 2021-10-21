@@ -6,7 +6,6 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <fcntl.h>
-#include <signal.h>
 
 #include <cstdio>
 #include <unistd.h>
