@@ -14,10 +14,8 @@ void_ostream& operator<<(void_ostream& l, auto) {
 }
 
 
-template <typename Stream = void_ostream, size_t BUFFSIZE = 1024>
+template <typename Console = std::ostream&, typename Stream = void_ostream, size_t BUFFSIZE = 1024>
 class Logger {
-    using Console = std::ostream&;
-
     Console console;
     Stream stream;
 
