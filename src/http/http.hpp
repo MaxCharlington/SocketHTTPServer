@@ -138,6 +138,7 @@ std::string_view Request::getParam(std::string_view key) const {
         }
         if (params[pos] == pair_delim) {
             if (key == cur_key) return {params + start, pos - start};
+            start = pos + 1;
         }
     }
     if (key == cur_key) return {params + start, pos - start};
