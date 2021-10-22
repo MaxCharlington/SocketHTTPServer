@@ -5,6 +5,8 @@
 #include <string>
 #include <string_view>
 
+using namespace std::string_literals;
+
 
 template <typename T>
 struct remove_all_const : std::remove_const<T>
@@ -26,7 +28,6 @@ struct remove_all_const<T *const>
 template <typename T>
 using remove_all_const_t = remove_all_const<T>::type;
 
-
 template <typename T>
 concept Stringlike = []
 {
@@ -42,4 +43,33 @@ template <Stringlike Op1, Stringlike Op2>
 std::string operator+(Op1 &&op1, Op2 &&op2)
 {
     return std::string{std::forward<Op1>(op1)} + std::string{std::forward<Op2>(op2)};
+}
+
+std::string replace(std::string subject, std::string_view search, std::string_view replace)
+{
+    size_t pos = 0;
+    while ((pos = subject.find(search, pos)) != std::string::npos)
+    {
+        subject.replace(pos, search.length(), replace);
+        pos += replace.length();
+    }
+    return subject;
+}
+
+void replace_implace(std::string& subject, std::string_view search, std::string_view replace)
+{
+    size_t pos = 0;
+    while ((pos = subject.find(search, pos)) != std::string::npos)
+    {
+        subject.replace(pos, search.length(), replace);
+        pos += replace.length();
+    }
+}
+
+std::string unescapeRequestStr(std::string subject)
+{
+    replace_implace(subject, "\n", "\x1b[33m\\n\x1b[0m\n");
+    replace_implace(subject, "\r", "\x1b[33m\\r\x1b[0m");
+    replace_implace(subject, " ", "\x1b[33m_\x1b[0m");
+    return subject;
 }
