@@ -1,4 +1,5 @@
 #include <string>
+#include <csignal>
 
 #include "src/server.hpp"
 #include "src/database/database.hpp"
@@ -6,6 +7,7 @@
 
 using namespace std::string_literals;
 using enum HTTPMethod;
+
 
 int main()
 {
@@ -59,5 +61,10 @@ int main()
             }
         }
     };
+
+    ServerStopper::init(s);
+    std::signal(SIGINT, ServerStopper::stop);
+
     s.start();
 }
+
