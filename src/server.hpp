@@ -62,7 +62,7 @@ class Server {
     bool is_running;
 
     void setup();
-    void respond(size_t n);
+    void respond();
 
 public:
     template<typename... Routes>
@@ -140,16 +140,17 @@ void Server::start()
 
         logger.log(ACCEPTED_MESSAGE, "Client num: ", m_cur_client, "\nClient fd: ", m_clients[m_cur_client]);
 
-        respond(m_cur_client);
+        respond();
+
         while (m_clients[m_cur_client] != -1) {
             m_cur_client = (m_cur_client + 1) % CONNMAX;
         }
     }
 }
 
-void Server::respond(size_t n)
+void Server::respond()
 {
-    int clientfd = m_clients[n];
+    int clientfd = m_clients[m_cur_client];
 
     if (int rcvd = recv(clientfd, m_buffer.data(), BUFSIZE - 1, 0); rcvd < 0)
         fprintf(stderr, ("recv() error\n"));
@@ -157,14 +158,14 @@ void Server::respond(size_t n)
         fprintf(stderr, "Client disconnected upexpectedly.\n");
     else
     {
-        logger.log(RECIEVED_MESSAGE, rcvd, " bytes from client ", n);
+        logger.log(RECIEVED_MESSAGE, rcvd, " bytes from client ", m_cur_client);
 
         // Handling received message
         Request req{m_buffer.data()};
 
-        logger.log(NEW_REQ_MESSAGE, req.toString());
+        logger.log(NEW_REQ_MESSAGE, unescapeRequestStr(req.toString()));
 
-        Response response{};
+        Response response{"HTTP/1.1", 404, "Not Found"};
         for (const auto& route : m_routes) {
             if (route.match(req)) {
                 try {
@@ -186,7 +187,7 @@ void Server::respond(size_t n)
         shutdown(clientfd, SHUT_RDWR);
         close(clientfd);
     }
-    m_clients[n] = -1;
+    m_clients[m_cur_client] = -1;
 
     std::ranges::fill(m_buffer, '\0');
 }
@@ -199,6 +200,7 @@ void Server::stop() {
     shutdown(m_clients[m_cur_client], SHUT_RDWR);
     close(m_clients[m_cur_client]);
 }
+
 
 // Support for std::signal
 struct ServerStopper {
