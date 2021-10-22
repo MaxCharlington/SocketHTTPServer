@@ -28,14 +28,14 @@ class Client {
 
     int sock = 0;
     sockaddr_in serv_addr;
-    std::vector<char> buf;
+    std::vector<char> m_buffer;
     Cookies cookies;
 
     void setup();
     void teardown();
 
 public:
-    Client() : buf(BUFSIZE, 0) {}
+    Client() : m_buffer(BUFSIZE, 0) {}
 
     void request(Request req);
     Response getResponce();
@@ -83,16 +83,16 @@ void Client::request(Request req) {
 
     logger.log(SENT_MESSAGE, send_len, " bytes");
 
-    size_t read_len = read(sock, buf.data(), buf.size() - 1);
+    size_t read_len = read(sock, m_buffer.data(), m_buffer.size() - 1);
     assert(read_len > 0);
 
-    buf[read_len] = '\0';
+    m_buffer[read_len] = '\0';
 
     teardown();
 }
 
 Response Client::getResponce() {
-    Response res{buf.data()};
+    Response res{m_buffer.data()};
 
     logger.log(GOT_RES_MESSAGE, res.toString());
 
