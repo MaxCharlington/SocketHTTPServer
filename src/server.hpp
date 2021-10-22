@@ -25,6 +25,7 @@
 #include "http/http.hpp"
 #include "logger.hpp"
 
+
 struct Route {
     std::string_view uri;
     HTTPMethod method;
@@ -34,6 +35,7 @@ struct Route {
         return uri == req.uri && method == req.method;
     }
 };
+
 
 // Logging
 Logger logger{};
@@ -63,7 +65,6 @@ class Server {
     void respond(size_t n);
 
 public:
-
     template<typename... Routes>
     Server(uint16_t port_, Routes&&... routes_)
         : m_port{std::to_string(port_)}, m_routes{sizeof...(Routes)}, m_buffer(BUFSIZE, 0), is_running{true}
@@ -83,7 +84,6 @@ void Server::setup()
 
     addrinfo hints;
     memset(&hints, 0, sizeof(hints));
-
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
