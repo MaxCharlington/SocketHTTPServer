@@ -138,7 +138,7 @@ void Server::start()
             continue;
         }
 
-        logger.log(ACCEPTED_MESSAGE, m_cur_client);
+        logger.log(ACCEPTED_MESSAGE, "Client num: ", m_cur_client, "\nClient fd: ", m_clients[m_cur_client]);
 
         respond(m_cur_client);
         while (m_clients[m_cur_client] != -1) {
@@ -196,6 +196,8 @@ void Server::stop() {
     is_running = false;
     shutdown(m_socketfd, SHUT_RDWR);
     close(m_socketfd);
+    shutdown(m_clients[m_cur_client], SHUT_RDWR);
+    close(m_clients[m_cur_client]);
 }
 
 // Support for std::signal
@@ -205,8 +207,11 @@ struct ServerStopper {
     static void init(Server& server_instance) {
         teardown__ = [&]{ server_instance.stop(); };
     }
+
+    static void stop_dummy(int) {}
     static void stop(int) {
         teardown__();
+        std::signal(SIGINT, stop_dummy);
     }
 };
 
