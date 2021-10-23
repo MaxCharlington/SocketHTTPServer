@@ -5,28 +5,10 @@
 #include <string>
 #include <string_view>
 
+#include "helpers.hpp"
+
 using namespace std::string_literals;
 
-
-template <typename T>
-struct remove_all_const : std::remove_const<T>
-{
-};
-
-template <typename T>
-struct remove_all_const<T *>
-{
-    using type = remove_all_const<T>::type *;
-};
-
-template <typename T>
-struct remove_all_const<T *const>
-{
-    using type = remove_all_const<T>::type *;
-};
-
-template <typename T>
-using remove_all_const_t = remove_all_const<T>::type;
 
 template <typename T>
 concept Stringlike = []
@@ -44,6 +26,7 @@ std::string operator+(Op1 &&op1, Op2 &&op2)
 {
     return std::string{std::forward<Op1>(op1)} + std::string{std::forward<Op2>(op2)};
 }
+
 
 std::string replace(std::string subject, std::string_view search, std::string_view replace)
 {
@@ -65,6 +48,7 @@ void replace_implace(std::string& subject, std::string_view search, std::string_
         pos += replace.length();
     }
 }
+
 
 std::string unescapeRequestStr(std::string subject)
 {
