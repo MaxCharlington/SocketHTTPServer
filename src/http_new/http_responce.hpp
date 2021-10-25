@@ -42,8 +42,6 @@ public:
     auto getStatusMsg() const -> std::string { return m_status_msg; }
     auto getStatusMsgView() const -> std::string_view { return m_status_msg; }
 
-    auto toString() const -> std::string { return m_raw_message; }
-    auto toStringView() const -> std::string_view { return m_raw_message; }
 };
 
 

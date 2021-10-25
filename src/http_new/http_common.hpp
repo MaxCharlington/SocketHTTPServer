@@ -97,6 +97,9 @@ public:
     auto getContent() const -> std::string { return m_content; }
     auto getContentView() const -> std::string_view { return m_content; }
     void setContent(string_like auto&& content);
+
+    auto toString() const -> std::string { return m_raw_message; }
+    auto toStringView() const -> std::string_view { return m_raw_message; }
 };
 
 Message::~Message() {}
