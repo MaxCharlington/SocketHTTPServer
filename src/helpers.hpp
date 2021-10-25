@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string_view>
+#include <type_traits>
 
 
 template <class T>
@@ -55,3 +56,7 @@ struct remove_all_const<T *const>
 
 template <typename T>
 using remove_all_const_t = remove_all_const<T>::type;
+
+
+template<typename T1, typename T2>
+concept same_to = std::is_same_v<std::decay_t<T1>, std::decay_t<T2>>;
