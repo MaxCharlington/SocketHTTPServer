@@ -6,7 +6,7 @@
 
 using HTTPStatus = uint16_t;
 
-void assertIsValid(HTTPStatus status) {
+constexpr void assertIsValid(HTTPStatus status) {
     switch(status) {
         case 100 ... 103:
         [[likely]] case 200 ... 208:
@@ -31,6 +31,8 @@ void assertIsValid(HTTPStatus status) {
     return status >= 200 && status <= 208 || status == 226;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreturn-type"
 [[nodiscard]] constexpr std::string_view getHTTPStatusMessage(HTTPStatus status) {
     assertIsValid(status);
     switch (status)
@@ -116,5 +118,6 @@ void assertIsValid(HTTPStatus status) {
         case 526: return "Invalid SSL Certificate";
     }
 }
+#pragma GCC diagnostic pop
 
 constexpr size_t statusLength = 3;

@@ -18,3 +18,4 @@ set(WARNING_FLAGS
 set(LANG_STANDARD -std=gnu++2b)  # Replacement
 
 add_subdirectory(samples)
+add_subdirectory(tests)

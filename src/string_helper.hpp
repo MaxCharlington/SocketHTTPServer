@@ -57,3 +57,17 @@ std::string unescapeRequestStr(std::string subject)
     replace_implace(subject, " ", "\x1b[33m_\x1b[0m");
     return subject;
 }
+
+
+std::vector<std::string_view> split(const std::string_view str, std::string_view delimiter) {
+    size_t pos_start = 0, pos_end;
+    std::vector<std::string_view> res;
+
+    while ((pos_end = str.find(delimiter, pos_start)) != std::string::npos) {
+        res.push_back(str.substr(pos_start, pos_end - pos_start));
+        pos_start = pos_end + delimiter.length();
+    }
+
+    res.push_back(str.substr(pos_start));
+    return res;
+}
