@@ -6,12 +6,12 @@
 
 
 template <typename T>
-using URIParam = std::pair<T, T>;
+using URNParam = std::pair<T, T>;
 
 template <typename T>
-using URIParams = std::vector<URIParam<T>>;
+using URNParams = std::vector<URNParam<T>>;
 
-using ParamRef = URIParam<std::string_view>;
-using ParamsRef = URIParams<std::string_view>;
-using Param = URIParam<std::string>;
-using Params = URIParams<std::string>;
+using ParamView = URNParam<std::string_view>;
+using ParamsView = URNParams<std::string_view>;
+using Param = URNParam<std::string>;
+using Params = URNParams<std::string>;
