@@ -7,8 +7,8 @@
 
 #include "string_helper.hpp"
 
-using namespace std::string_literals;
 
+namespace HTTP {
 
 enum class HTTPMethod {
     GET,
@@ -22,7 +22,7 @@ enum class HTTPMethod {
     PATCH
 };
 
-constexpr std::string_view toString(HTTPMethod method) noexcept {
+constexpr std::string_view toString(HTTPMethod method) {
     switch (method)
     {
         using enum HTTPMethod;
@@ -39,8 +39,8 @@ constexpr std::string_view toString(HTTPMethod method) noexcept {
     }
 }
 
-template <typename Ret, Stringlike T>
-constexpr HTTPMethod fromString(T&& method_str) noexcept {
+
+constexpr HTTPMethod fromString(string_like auto&& method_str) {
     using enum HTTPMethod;
     [[likely]] if (method_str == "GET") return GET;
     if (method_str == "HEAD") return HEAD;
@@ -55,3 +55,5 @@ constexpr HTTPMethod fromString(T&& method_str) noexcept {
 }
 
 using Method = HTTPMethod;
+
+} // namespace HTTP

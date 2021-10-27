@@ -4,6 +4,8 @@
 #include <stdexcept>
 
 
+namespace HTTP {
+
 using HTTPStatus = uint16_t;
 
 constexpr void assertIsValid(HTTPStatus status) {
@@ -121,3 +123,5 @@ constexpr void assertIsValid(HTTPStatus status) {
 #pragma GCC diagnostic pop
 
 constexpr size_t statusLength = 3;
+
+} // namespace HTTP
