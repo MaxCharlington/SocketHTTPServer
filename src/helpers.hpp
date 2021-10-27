@@ -59,4 +59,4 @@ using remove_all_const_t = remove_all_const<T>::type;
 
 
 template<typename T1, typename T2>
-concept same_to = std::is_same_v<std::decay_t<T1>, std::decay_t<T2>>;
+concept same_as = std::is_same_v<std::remove_cvref_t<T1>, T2>;
