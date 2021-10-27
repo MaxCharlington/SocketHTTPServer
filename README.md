@@ -5,7 +5,7 @@ The repo started as a fork of C socket server implementation which you can find 
 
 ## Building
 
-To build the project in current version you need **g++-11** compiler and **CMake3.0** or higher. Also you are required to have **Make** on your machine. The build process is validated on **Ubuntu20.04 LTS**.
+To build the project in current version you need **g++-11** compiler and **CMake** with 3.0 version or higher. Also you are required to have **Make** on your machine. The build process is validated on **Ubuntu20.04 LTS** but it is expected to be easily built on any **Debian** based distribution.
 
 Steps to build the project:
 1. Go to the root repo folder.
@@ -15,7 +15,7 @@ Steps to build the project:
 
 ## Samples
 
-There are some samples you can tinker with. They are located at **samples** folder and after building you can run them from **./build/samples** folder.
+There are some samples you can tinker with. They are located at **./samples** folder and after building you can run them from **./build/samples** folder.
 
 ## Contribution
 
