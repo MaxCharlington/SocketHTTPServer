@@ -4,6 +4,7 @@
 #include <concepts>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "helpers.hpp"
 
@@ -70,4 +71,21 @@ std::vector<std::string_view> split(const std::string_view str, std::string_view
 
     res.push_back(str.substr(pos_start));
     return res;
+}
+
+
+[[nodiscard]] std::vector<std::pair<std::string, std::string>> toVecOfStr(const std::vector<std::pair<std::string_view, std::string_view>>& views) {
+    std::vector<std::pair<std::string, std::string>> strs;
+    strs.reserve(views.size());
+    for (auto [key, value] : views)
+        strs.emplace_back(std::string{key}, std::string{value});
+    return strs;
+}
+
+[[nodiscard]] std::vector<std::pair<std::string_view, std::string_view>> toVecOfStrView(const std::vector<std::pair<std::string, std::string>>& strs) {
+    std::vector<std::pair<std::string_view, std::string_view>> views;
+    views.reserve(strs.size());
+    for (auto [key, value] : strs)
+        views.emplace_back(std::string{key}, std::string{value});
+    return views;
 }
