@@ -82,34 +82,31 @@ void Message::parseBody(std::vector<std::string_view>&& lines)
 
 void Message::addContent(string_like auto&& text) {
     m_content = std::forward<decltype(text)>(text);
-    m_headers.emplace_back("Content-Length", std::to_string(m_content.length()));
-    m_headers.emplace_back("Content-Type", "text/plain");
+    m_headers.insert_or_assign("Content-Length", std::to_string(m_content.length()));
+    m_headers.insert_or_assign("Content-Type", "text/plain");
 }
 
 [[nodiscard]] auto Message::getHeaderValueRef(string_like auto&& searched_key) const -> const std::string& {
-    if (m_headers.size() > 0)
-        for (const auto& [key, value] : m_headers)
-            if (key == searched_key)
-                return value;
+    if (auto search = m_headers.find(searched_key); search != m_headers.end())
+        return search->second;
     throw std::runtime_error{"There was no key in headers called" + std::string{searched_key}};
 }
 
 [[nodiscard]] auto Message::getHeaderValueRef(string_like auto&& searched_key) -> std::string& {
-    if (m_headers.size() > 0)
-        for (auto& [key, value] : m_headers)
-            if (key == searched_key)
-                return value;
+    if (auto search = m_headers.find(searched_key); search != m_headers.end())
+        return search->second;
     throw std::runtime_error{"There was no key in headers called" + std::string{searched_key}};
 }
 
 void Message::addHeader(string_like auto&& key, string_like auto&& value) {
     // TODO: Add checking for header validity
-    m_headers.emplace_back(std::forward<decltype(key)>(key), std::forward<decltype(value)>(value));
+    m_headers.insert_or_assign(std::string{std::forward<decltype(key)>(key)}, std::string{std::forward<decltype(value)>(value)});
 }
 
 void Message::addHeader(same_as<Header> auto&& header) {
     // TODO: Add checking for header validity
-    m_headers.emplace_back(std::forward<decltype(header)>(header));
+    auto&&[key, value] = header;
+    m_headers.insert_or_assign(std::string{std::forward<decltype(key)>(key)}, std::string{std::forward<decltype(value)>(value)});
 }
 
 void Message::setContent(string_like auto&& content) {

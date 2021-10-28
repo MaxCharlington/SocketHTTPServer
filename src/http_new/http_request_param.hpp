@@ -1,8 +1,8 @@
 #pragma once
 
-#include <string_view>
 #include <string>
-#include <utility>
+#include <string_view>
+#include <unordered_map>
 
 
 namespace HTTP {
@@ -11,7 +11,7 @@ template <typename T>
 using URNParam = std::pair<T, T>;
 
 template <typename T>
-using URNParams = std::vector<URNParam<T>>;
+using URNParams = std::unordered_map<T, T>;
 
 using ParamView = URNParam<std::string_view>;
 using ParamsView = URNParams<std::string_view>;

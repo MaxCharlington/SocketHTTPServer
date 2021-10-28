@@ -57,9 +57,9 @@ public:
 
     [[nodiscard]] auto getParams() const -> const Params& { return m_params; }
 
-    void addParam(string_like auto&& key, string_like auto&& value) { m_params.emplace_back(std::forward<decltype(key)>(key), std::forward<decltype(value)>(value)); }
+    void addParam(string_like auto&& key, string_like auto&& value) { m_params.insert_or_assign(std::string{std::forward<decltype(key)>(key)}, std::string{std::forward<decltype(value)>(value)}); }
 
-    void addParam(same_as<Param> auto&& param) { m_params.push_back(std::forward<decltype(param)>(param)); }
+    void addParam(same_as<Param> auto&& param);
 
 
     template <typename Ret = std::string>
@@ -73,7 +73,7 @@ public:
     std::string path_params = m_uri;
     if (m_params.size() > 0) {
         path_params += "?";
-        for (auto &&[key, value] : m_params)
+        for (const auto&[key, value] : m_params)
         {
             path_params += key + "=" + value + "&";
         }
@@ -83,18 +83,14 @@ public:
 }
 
 [[nodiscard]] const std::string& Request::getParamValueRef(string_like auto&& searched_key) const {
-    if (m_params.size() > 0)
-        for (const auto& [key, value] : m_params)
-            if (key == searched_key)
-                return value;
+    if (auto search = m_params.find(searched_key); search != m_params.end())
+        return search->second;
     throw std::runtime_error{"There was no key in params called" + std::string{searched_key}};
 }
 
 [[nodiscard]] std::string& Request::getParamValueRef(string_like auto&& searched_key) {
-    if (m_params.size() > 0)
-        for (auto& [key, value] : m_params)
-            if (key == searched_key)
-                return value;
+    if (auto search = m_params.find(searched_key); search != m_params.end())
+        return search->second;
     throw std::runtime_error{"There was no key in params called" + std::string{searched_key}};
 }
 
@@ -114,6 +110,11 @@ Request::Request(string_like auto&& request_str) {
     }
     m_uri = urn_parts[0];
     parseBody(std::move(lines));
+}
+
+void Request::addParam(same_as<Param> auto&& param) {
+    auto&&[key, value] = param;
+    m_params.insert_or_assign(std::string{std::forward<decltype(key)>(key)}, std::string{std::forward<decltype(value)>(value)});
 }
 
 } // namespace HTTP
