@@ -5,8 +5,6 @@
 #include <string>
 #include <string_view>
 #include <algorithm>
-#include <optional>
-#include <functional>
 
 #include "http_header.hpp"
 #include "helpers.hpp"
@@ -20,23 +18,17 @@ class Message {
 protected:
     static constexpr auto newLine = "\r\n";
 
-    std::string m_raw_message;
-    std::optional<Headers> m_headers;
+    Headers m_headers;
     std::string m_content;
 
 
-    virtual std::string getStartLine() = 0;
+    virtual std::string getStartLine() const = 0;
 
-    Message()
-        : m_raw_message{"HTTP/1.1 200 OK"} {}
-    Message(string_like auto&& raw_message)
-        : m_raw_message{std::forward<decltype(raw_message)>(raw_message)} {}
-    Message(std::optional<Headers>&& headers, std::string&& content)
+    Message() = default;
+    Message(Headers&& headers, std::string&& content)
         : m_headers{std::move(headers)}, m_content{std::move(content)} {}
     virtual ~Message() = 0;
 
-
-    void init();
     void parseBody(std::vector<std::string_view>&& lines);
 
 
@@ -46,10 +38,9 @@ protected:
     auto getHeaderValueRef(string_like auto&& key) -> std::string&;
 
 public:
-    auto getHeaderValue(string_like auto&& key) const -> std::string;
-    auto getHeaderValueView(string_like auto&& key) const -> std::string_view;
-    auto getHeaders() const -> Headers;
-    auto getHeadersView() const -> HeadersView;
+    template <typename Ret = std::string>
+    auto getHeaderValue(string_like auto&& key) const -> Ret { return getHeaderValueRef(std::forward<decltype(key)>(key)); }
+    auto getHeaders() const -> const Headers& { return m_headers; }
     void addHeader(string_like auto&& key, string_like auto&& value);
     void addHeader(same_as<Header> auto&& header);
 
@@ -57,16 +48,11 @@ public:
     [[nodiscard]] auto getContentView() const -> std::string_view { return m_content; }
     void setContent(string_like auto&& content);
 
-    auto toString() const -> std::string { return m_raw_message; }
-    auto toStringView() const -> std::string_view { return m_raw_message; }
+    [[nodiscard]] auto toString() const -> std::string { return getStartLine() + getMessageBody(); }
 };
 
 Message::~Message() {}
 
-
-void Message::init() {
-    m_raw_message = getStartLine() + getMessageBody();
-}
 
 void Message::parseBody(std::vector<std::string_view>&& lines)
 {
@@ -84,9 +70,9 @@ void Message::parseBody(std::vector<std::string_view>&& lines)
 
 [[nodiscard]] std::string Message::getMessageBody() const {
     std::string body;
-    if (m_headers.has_value() && m_headers.value().size() > 0) {
+    if (m_headers.size() > 0) {
         body += newLine;
-        for (const auto& [key, value] : m_headers.value())
+        for (const auto& [key, value] : m_headers)
             body += key + ": " + value + newLine;
         if (m_content.length() > 0)
             (body += newLine) += m_content;
@@ -96,68 +82,34 @@ void Message::parseBody(std::vector<std::string_view>&& lines)
 
 void Message::addContent(string_like auto&& text) {
     m_content = std::forward<decltype(text)>(text);
-    std::reference_wrapper<Headers> headers;
-    if (!m_headers.has_value())
-        headers = m_headers.emplace();
-    else
-        headers = m_headers.value();
-    headers.get().emplace_back("Content-Length", std::to_string(m_content.length()));
-    headers.get().emplace_back("Content-Type", "text/plain");
-    init();
+    m_headers.emplace_back("Content-Length", std::to_string(m_content.length()));
+    m_headers.emplace_back("Content-Type", "text/plain");
 }
 
 [[nodiscard]] auto Message::getHeaderValueRef(string_like auto&& searched_key) const -> const std::string& {
-    if (m_headers.has_value())
-        for (const auto& [key, value] : m_headers.value())
+    if (m_headers.size() > 0)
+        for (const auto& [key, value] : m_headers)
             if (key == searched_key)
                 return value;
     throw std::runtime_error{"There was no key in headers called" + std::string{searched_key}};
 }
 
 [[nodiscard]] auto Message::getHeaderValueRef(string_like auto&& searched_key) -> std::string& {
-    if (m_headers.has_value())
-        for (auto& [key, value] : m_headers.value())
+    if (m_headers.size() > 0)
+        for (auto& [key, value] : m_headers)
             if (key == searched_key)
                 return value;
     throw std::runtime_error{"There was no key in headers called" + std::string{searched_key}};
 }
 
-[[nodiscard]] auto Message::getHeaderValue(string_like auto&& key) const -> std::string {
-    return getHeaderValueRef(std::forward<decltype(key)>(key));
-}
-
-[[nodiscard]] auto Message::getHeaderValueView(string_like auto&& key) const -> std::string_view {
-    return getHeaderValueRef(std::forward<decltype(key)>(key));
-}
-
-[[nodiscard]] auto Message::getHeaders() const -> Headers {
-    return m_headers.has_value() ? m_headers.value() : Headers{};
-}
-
-[[nodiscard]] auto Message::getHeadersView() const -> HeadersView {
-    return toVecOfStrView(m_headers.has_value() ? m_headers.value() : Headers{});
-}
-
 void Message::addHeader(string_like auto&& key, string_like auto&& value) {
     // TODO: Add checking for header validity
-    if (!m_headers.has_value()) {
-        m_headers.emplace().emplace_back(std::forward<decltype(key)>(key), std::forward<decltype(value)>(value));
-    }
-    else {
-        m_headers.value().emplace_back(std::forward<decltype(key)>(key), std::forward<decltype(value)>(value));
-    }
-    init();
+    m_headers.emplace_back(std::forward<decltype(key)>(key), std::forward<decltype(value)>(value));
 }
 
 void Message::addHeader(same_as<Header> auto&& header) {
     // TODO: Add checking for header validity
-    if (!m_headers.has_value()) {
-        m_headers.emplace().emplace_back(std::forward<decltype(header)>(header));
-    }
-    else {
-        m_headers.value().emplace_back(std::forward<decltype(header)>(header));
-    }
-    init();
+    m_headers.emplace_back(std::forward<decltype(header)>(header));
 }
 
 void Message::setContent(string_like auto&& content) {
@@ -167,7 +119,6 @@ void Message::setContent(string_like auto&& content) {
         m_content = std::forward<decltype(content)>(content);
         getHeaderValueRef("Content-Length") = m_content.length();
     }
-    init();
 }
 
 } // namespace HTTP

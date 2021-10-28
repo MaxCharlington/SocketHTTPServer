@@ -17,10 +17,11 @@ namespace HTTP {
 class Request : public Message {
     Method m_method;
     std::string m_uri;       // before '?'
-    std::optional<Params> m_params;         // "a=1&b=2" things after  '?'
+    Params m_params;         // "a=1&b=2" things after  '?'
     std::string m_protocol;  // "HTTP/<version>"
 
-    std::string getStartLine() final;
+    // Internal
+    std::string getStartLine() const final;
     auto getParamValueRef(string_like auto&& key) const -> const std::string&;
     auto getParamValueRef(string_like auto&& key) -> std::string&;
 
@@ -30,35 +31,49 @@ public:
     Request& operator=(const Request&) = default;
     Request& operator=(Request&&) = default;
 
-    Request(Method method, string_like auto&& uri, string_like auto&& protocol);
-    Request(Method method, string_like auto&& uri, Params params, string_like auto&& protocol);
+    Request(Method method, string_like auto&& uri, string_like auto&& protocol)
+        : m_method{method}, m_uri{std::forward<decltype(uri)>(uri)},
+        m_params{}, m_protocol{std::forward<decltype(protocol)>(protocol)} {}
+
+    Request(Method method, string_like auto&& uri, Params params, string_like auto&& protocol)
+        : m_method{method}, m_uri{std::forward<decltype(uri)>(uri)},
+        m_params{params}, m_protocol{std::forward<decltype(protocol)>(protocol)} {}
+
     Request(string_like auto&& request_str);
 
 
     [[nodiscard]] auto getMethod() const -> Method { return m_method; }
-    void setMethod(Method method);
+    void setMethod(Method method) { m_method = method; }
 
-    [[nodiscard]] auto getUri() -> std::string_view { return m_uri; }
-    void setUri(string_like auto&& uri);
 
-    auto getParamValue(string_like auto&& key) const -> std::string;
-    auto getParamValueView(string_like auto&& key) const -> std::string_view;
-    auto getParams() const -> Params;
-    auto getParamsView() const -> ParamsView;
-    void addParam(string_like auto&& key, string_like auto&& value);
-    void addParam(same_as<Param> auto&& param);
+    template <typename Ret = std::string>
+    [[nodiscard]] auto getUri() -> Ret { return m_uri; }
 
-    [[nodiscard]] auto getProtocol() const -> std::string { return std::string{m_protocol}; }
-    auto getProtocolView() const -> std::string_view { return m_protocol; }
-    void setProtocol(string_like auto&& protocol);
+    void setUri(string_like auto&& uri) { m_uri = std::forward<decltype(uri)>(uri); }
+
+
+    template <typename Ret = std::string>
+    [[nodiscard]] auto getParamValue(string_like auto&& key) const -> Ret { return getParamValueRef(std::forward<decltype(key)>(key)); }
+
+    [[nodiscard]] auto getParams() const -> const Params& { return m_params; }
+
+    void addParam(string_like auto&& key, string_like auto&& value) { m_params.emplace_back(std::forward<decltype(key)>(key), std::forward<decltype(value)>(value)); }
+
+    void addParam(same_as<Param> auto&& param) { m_params.push_back(std::forward<decltype(param)>(param)); }
+
+
+    template <typename Ret = std::string>
+    [[nodiscard]] auto getProtocol() const -> Ret { return m_protocol; }
+
+    void setProtocol(string_like auto&& protocol) { m_protocol = std::forward<decltype(protocol)>(protocol); }
 };
 
 
-[[nodiscard]] std::string Request::getStartLine() {
+[[nodiscard]] std::string Request::getStartLine() const {
     std::string path_params = m_uri;
-    if (m_params.has_value()) {
+    if (m_params.size() > 0) {
         path_params += "?";
-        for (auto &&[key, value] : m_params.value())
+        for (auto &&[key, value] : m_params)
         {
             path_params += key + "=" + value + "&";
         }
@@ -68,34 +83,21 @@ public:
 }
 
 [[nodiscard]] const std::string& Request::getParamValueRef(string_like auto&& searched_key) const {
-    if (m_params.has_value())
-        for (const auto& [key, value] : m_params.value())
+    if (m_params.size() > 0)
+        for (const auto& [key, value] : m_params)
             if (key == searched_key)
                 return value;
     throw std::runtime_error{"There was no key in params called" + std::string{searched_key}};
 }
 
 [[nodiscard]] std::string& Request::getParamValueRef(string_like auto&& searched_key) {
-    if (m_params.has_value())
-        for (auto& [key, value] : m_params.value())
+    if (m_params.size() > 0)
+        for (auto& [key, value] : m_params)
             if (key == searched_key)
                 return value;
     throw std::runtime_error{"There was no key in params called" + std::string{searched_key}};
 }
 
-Request::Request(Method method, string_like auto&& uri, string_like auto&& protocol)
-    : Message{}, m_method{method}, m_uri{std::forward<decltype(uri)>(uri)},
-    m_params{}, m_protocol{std::forward<decltype(protocol)>(protocol)}
-{
-    init();
-}
-
-Request::Request(Method method, string_like auto&& uri, Params params, string_like auto&& protocol)
-    : Message{}, m_method{method}, m_uri{std::forward<decltype(uri)>(uri)},
-    m_params{params}, m_protocol{std::forward<decltype(protocol)>(protocol)}
-{
-    init();
-}
 
 Request::Request(string_like auto&& request_str) {
     auto lines = split(request_str, newLine);
@@ -112,58 +114,6 @@ Request::Request(string_like auto&& request_str) {
     }
     m_uri = urn_parts[0];
     parseBody(std::move(lines));
-    // No init as m_raw message is already initialized
-}
-
-void Request::setMethod(Method method) {
-    m_method = method;
-    init();
-}
-
-void Request::setUri(string_like auto&& uri) {
-    m_uri = std::forward<decltype(uri)>(uri);
-    init();
-}
-
-[[nodiscard]] auto Request::getParamValue(string_like auto&& key) const -> std::string {
-    return getParamValueRef(std::forward<decltype(key)>(key));
-}
-
-[[nodiscard]] auto Request::getParamValueView(string_like auto&& key) const -> std::string_view {
-    return getParamValueRef(std::forward<decltype(key)>(key));
-}
-
-[[nodiscard]] auto Request::getParams() const -> Params {
-    return m_params.has_value() ? m_params.value() : Params{};
-}
-
-[[nodiscard]] auto Request::getParamsView() const -> ParamsView {
-    return toVecOfStrView(m_params.has_value() ? m_params.value() : Params{});
-}
-
-void Request::addParam(string_like auto&& key, string_like auto&& value) {
-    if (!m_params.has_value()) {
-        m_params.emplace().emplace_back(std::forward<decltype(key)>(key), std::forward<decltype(value)>(value));
-    }
-    else {
-        m_params.value().emplace_back(std::forward<decltype(key)>(key), std::forward<decltype(value)>(value));
-    }
-    init();
-}
-
-void Request::addParam(same_as<Param> auto&& param) {
-    if (!m_params.has_value()) {
-        m_params.emplace().push_back(std::forward<decltype(param)>(param));
-    }
-    else {
-        m_params.value().push_back(std::forward<decltype(param)>(param));
-    }
-    init();
-}
-
-void Request::setProtocol(string_like auto&& protocol) {
-    m_protocol = std::forward<decltype(protocol)>(protocol);
-    init();
 }
 
 } // namespace HTTP
