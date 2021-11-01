@@ -82,8 +82,9 @@ void Message::parseBody(std::vector<std::string_view>&& lines_)
         body += newLine;
         for (const auto& [key, value] : m_headers)
             body += key + ": " + value + newLine;
+        body += newLine;
         if (m_content.length() > 0)
-            (body += newLine) += m_content;
+            body += m_content;
     }
     return body;
 }
