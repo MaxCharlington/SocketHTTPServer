@@ -58,6 +58,7 @@
       "map": "cpp",
       "iomanip": "cpp",
       "csignal": "cpp",
-      "charconv": "cpp"
+      "charconv": "cpp",
+      "span": "cpp"
     }
 }
