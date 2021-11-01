@@ -12,8 +12,11 @@
 #include <cstring>
 #include <cassert>
 
-#include "http/http.hpp"
+#include "http.hpp"
 #include "logger.hpp"
+
+using namespace http;
+
 
 // Logging
 Logger logger{};
@@ -96,7 +99,7 @@ Response Client::getResponce() {
 
     logger.log(GOT_RES_MESSAGE, res.toString());
 
-    auto cookie_to_save = res.getHeader("SetCookie");
+    auto cookie_to_save = res.getHeaderValue("SetCookie");
     if (cookie_to_save.length() > 0) {
         Cookie c = Cookies::getCookieFromSetHeader(cookie_to_save);
 

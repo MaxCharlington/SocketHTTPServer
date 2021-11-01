@@ -14,7 +14,7 @@
 // Partly specified cookie implementation
 // Has support for simplest usecase of cookie
 
-namespace HTTP {
+namespace http {
 
 using Cookie = std::pair<std::string_view, std::string_view>;
 
@@ -101,4 +101,5 @@ public:
 
 Logger<> Cookies::logger{};
 
-}  // namespace HTTP
+
+}  // namespace http
