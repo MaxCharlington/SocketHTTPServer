@@ -11,22 +11,22 @@ using HttpStatus = uint16_t;
 
 constexpr void assertIsValid(HttpStatus status) {
     switch(status) {
-        case 100 ... 103:
-        [[likely]] case 200 ... 208:
-        case 226:
-        case 300 ... 308:
-        [[likely]] case 400 ... 419:
-        case 421 ... 426:
-        case 428 ... 429:
-        case 431:
-        case 449:
-        case 451:
-        case 499:
-        [[likely]] case 500 ... 511:
+        case 100 ... 103: [[fallthrough]];
+        [[likely]] case 200 ... 208: [[fallthrough]];
+        case 226: [[fallthrough]];
+        case 300 ... 308: [[fallthrough]];
+        [[likely]] case 400 ... 419: [[fallthrough]];
+        case 421 ... 426: [[fallthrough]];
+        case 428 ... 429: [[fallthrough]];
+        case 431: [[fallthrough]];
+        case 449: [[fallthrough]];
+        case 451: [[fallthrough]];
+        case 499: [[fallthrough]];
+        [[likely]] case 500 ... 511: [[fallthrough]];
         case 520 ... 526:
             return;
+        default: throw std::runtime_error("Invalid HTTP status value" + std::to_string(status));
     }
-    throw std::runtime_error("Invalid HTTP status value" + std::to_string(status));
 }
 
 [[nodiscard]] constexpr bool isSuccessful(HttpStatus status) {
@@ -122,8 +122,6 @@ constexpr void assertIsValid(HttpStatus status) {
     }
 }
 #pragma GCC diagnostic pop
-
-constexpr size_t statusLength = 3;
 
 
 } // namespace http

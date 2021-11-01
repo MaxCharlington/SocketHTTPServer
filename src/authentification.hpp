@@ -10,7 +10,7 @@
 
 class Auth {
     static size_t getUniqueKey() {
-        auto current_time = std::time(0);
+        auto current_time = std::time(nullptr);
         auto str = ctime(&current_time);
         return std::hash<std::string>{}(str);
     }

@@ -42,7 +42,7 @@ public:
     void setProtocol(string_like auto&& protocol);
 
 
-    [[nodiscard]] auto getStatus() const -> HttpStatus { return std::stoi(m_status); };
+    [[nodiscard]] auto getStatus() const -> HttpStatus { return std::stoi(m_status); }
 
     auto setStatus(HttpStatus status);
 

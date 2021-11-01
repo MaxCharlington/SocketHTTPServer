@@ -132,7 +132,7 @@ void Server::start()
     {
         sockaddr_in clientaddr;
         socklen_t addrlen = sizeof(clientaddr);
-        m_clients[m_cur_client] = accept(m_socketfd, (sockaddr *)&clientaddr, &addrlen);
+        m_clients[m_cur_client] = accept(m_socketfd, reinterpret_cast<sockaddr*>(&clientaddr), &addrlen);
 
         if (m_clients[m_cur_client] == -1)
         {
@@ -219,4 +219,4 @@ struct ServerStopper {
     }
 };
 
-std::function<void()> ServerStopper::teardown__ = []{};
+std::function<void()> ServerStopper::teardown__ = [] noexcept {};

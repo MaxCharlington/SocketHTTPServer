@@ -1,12 +1,10 @@
 ### Server/client sample that shows Authentification and database capabilities ###
 
 add_executable(server_db_auth_sample.run server_db_auth_sample.cpp)
-target_compile_options(server_db_auth_sample.run PRIVATE ${WARNING_FLAGS} ${LANG_STANDARD})
 target_include_directories(server_db_auth_sample.run PRIVATE ${PROJECT_DIR}/src)
 target_include_directories(server_db_auth_sample.run PRIVATE ${PROJECT_DIR}/src/http)
 
 add_executable(client_db_auth_sample.run client_db_auth_sample.cpp)
-target_compile_options(client_db_auth_sample.run PRIVATE ${WARNING_FLAGS} ${LANG_STANDARD})
 target_include_directories(client_db_auth_sample.run PRIVATE ${PROJECT_DIR}/src)
 target_include_directories(client_db_auth_sample.run PRIVATE ${PROJECT_DIR}/src/http)
 
@@ -19,6 +17,5 @@ file(COPY ${PROJECT_DIR}/src/database/db.txt
 ### Simple server sample ###
 
 add_executable(server_sample.run server_sample.cpp)
-target_compile_options(server_sample.run PRIVATE ${WARNING_FLAGS} ${LANG_STANDARD})
 target_include_directories(server_sample.run PRIVATE ${PROJECT_DIR}/src)
 target_include_directories(server_sample.run PRIVATE ${PROJECT_DIR}/src/http)
