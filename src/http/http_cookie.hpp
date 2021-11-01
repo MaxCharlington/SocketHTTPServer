@@ -7,11 +7,14 @@
 #include <cassert>
 
 #include "http_header.hpp"
-#include "../string_helper.hpp"
-#include "../logger.hpp"
+#include "string_helper.hpp"
+#include "logger.hpp"
+
 
 // Partly specified cookie implementation
 // Has support for simplest usecase of cookie
+
+namespace HTTP {
 
 using Cookie = std::pair<std::string_view, std::string_view>;
 
@@ -58,18 +61,18 @@ public:
         m_cookies[cookie.first] = cookie.second;
     }
 
-    Header_t getCookieHeader() const {
+    Header getCookieHeader() const {
         std::string cookies_value;
         if (m_cookies.size() > 0) {
             for (const auto& [key, value] : m_cookies)
-                cookies_value += key + "=" + value + "; ";
+                cookies_value += std::string{key} + "=" + std::string{value} + "; ";
             cookies_value.resize(cookies_value.size() - 2);  // Remove last '; '
             return {"Cookie", cookies_value};
         }
         return {};
     }
 
-    static Header_t getSetCookieHeader(std::string key, std::string value) {
+    static Header getSetCookieHeader(std::string key, std::string value) {
         return {"SetCookie", key + '=' + value};
     }
 
@@ -97,3 +100,5 @@ public:
 };
 
 Logger<> Cookies::logger{};
+
+}  // namespace HTTP
