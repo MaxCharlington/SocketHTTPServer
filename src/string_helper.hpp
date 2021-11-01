@@ -8,8 +8,6 @@
 
 #include "helpers.hpp"
 
-using namespace std::string_literals;
-
 
 template <typename T>
 concept Stringlike = []

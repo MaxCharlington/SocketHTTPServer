@@ -1,7 +1,8 @@
 #include <iostream>
 #include "http_response.hpp"
 
-using namespace HTTP;
+using namespace http;
+
 
 int main() {
     Response r{};

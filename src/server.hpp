@@ -22,17 +22,19 @@
 #include <algorithm>
 #include <ranges>
 
-#include "http/http.hpp"
+#include "http.hpp"
 #include "logger.hpp"
+
+using namespace http;
 
 
 struct Route {
     std::string_view uri;
-    HTTPMethod method;
+    HttpMethod method;
     std::function<Response(Request)> handler;
 
-    constexpr bool match(const Request& req) const {
-        return uri == req.uri && method == req.method;
+    bool match(const Request& request) const {
+        return uri == request.getUri<std::string_view>() && method == request.getMethod();
     }
 };
 
@@ -161,19 +163,19 @@ void Server::respond()
         logger.log(RECIEVED_MESSAGE, rcvd, " bytes from client ", m_cur_client);
 
         // Handling received message
-        Request req{m_buffer.data()};
+        Request request{m_buffer.data()};
 
-        logger.log(NEW_REQ_MESSAGE, unescapeRequestStr(req.toString()));
+        logger.log(NEW_REQ_MESSAGE, unescapeRequestStr(request.toString()));
 
-        Response response{"HTTP/1.1", 404, "Not Found"};
+        Response response{"HTTP/1.1", 404};
         for (const auto& route : m_routes) {
-            if (route.match(req)) {
+            if (route.match(request)) {
                 try {
-                    response = route.handler(req);
+                    response = route.handler(request);
                 }
                 catch (std::exception& e) {
                     logger.log(ERROR_MESSAGE, "Request handler thrown an exeption: ", e.what());
-                    response = Response{"HTTP/1.1", 500, "Internal Server Error"};
+                    response = Response{"HTTP/1.1", 500};
                 }
                 break;
             }

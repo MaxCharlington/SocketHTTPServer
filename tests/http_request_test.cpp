@@ -1,8 +1,9 @@
 #include <iostream>
 #include "http_request.hpp"
 
-using namespace HTTP;
-using enum HTTPMethod;
+using namespace http;
+using enum HttpMethod;
+
 
 int main() {
     // Request r{};

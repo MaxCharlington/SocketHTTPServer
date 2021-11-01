@@ -9,6 +9,8 @@ set(WARNING_FLAGS
     -Wextra
     -Wshadow
     -Wno-write-strings
+    -ggdb3
+    -O0
 )
 
 # set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG")

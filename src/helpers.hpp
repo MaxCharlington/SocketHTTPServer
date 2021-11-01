@@ -7,7 +7,6 @@
 template <class T>
 constexpr std::string_view type_name()
 {
-    using namespace std;
     #ifdef __clang__
         std::string_view p = __PRETTY_FUNCTION__;
         return string_view(p.data() + 34, p.size() - 34 - 1);

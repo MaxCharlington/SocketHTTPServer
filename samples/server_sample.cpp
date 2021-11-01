@@ -4,7 +4,7 @@
 #include "server.hpp"
 
 using namespace std::string_literals;
-using enum HTTPMethod;
+using enum HttpMethod;
 
 
 int main()
@@ -13,15 +13,15 @@ int main()
         Route{
             "/", GET,
             [&](Request req){
-                auto res = Response{"HTTP/1.1", 200, "OK"};
-                res.addContent("Your user agent is: " + std::string(req.getHeader("User-Agent")));
+                auto res = Response{"HTTP/1.1", 200};
+                res.setContent("Your user agent is: " + req.getHeaderValue("User-Agent"));
                 return res;
             }
         },
         Route{
             "/", POST,
             [&]([[maybe_unused]] auto req){
-                return Response{"HTTP/1.1", 200, "OK"};
+                return Response{"HTTP/1.1", 200};
             }
         }
     };

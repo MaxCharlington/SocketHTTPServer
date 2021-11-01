@@ -1,13 +1,13 @@
 #include <iostream>
 
-#include "src/client.hpp"
+#include "client.hpp"
 
-using enum HTTPMethod;
+using enum HttpMethod;
 
 int main() {
     Client client{};
 
-    Request req{GET, "/register?login=Maxim&pass=Maxim&role=coolGuy"};  // Add setParam method
+    Request req{GET, "/register", {{"login","Maxim"}, {"pass","Maxim"}, {"role", "coolGuy"}}};  // Add setParam method
     client.request(req);
     auto res = client.getResponce();
 

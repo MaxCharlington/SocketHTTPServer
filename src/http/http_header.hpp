@@ -1,28 +1,23 @@
 #pragma once
 
+#include <string>
 #include <string_view>
-
-template <typename KeyT = std::string, typename ValueT = std::string>
-struct Header
-{
-    using key_type = KeyT;
-    using value_type = ValueT;
-
-    KeyT key;
-    ValueT value;
-
-    Header() = default;
-    Header(key_type key_, value_type value_) : key{key_}, value{value_} {}
-};
+#include <unordered_map>
 
 
-using Header_t = Header<>;
-using Headers = std::vector<Header_t>;
+namespace http {
 
-std::string_view getHeaderImpl(const Headers& headers, std::string_view key) {
-    for (auto& header : headers) {
-        if (header.key == key)
-            return header.value;
-    }
-    return "";
-}
+
+template <typename T>
+using HttpHeader = std::pair<T, T>;
+
+template <typename T>
+using HttpHeaders = std::unordered_map<T, T>;
+
+using HeaderView = HttpHeader<std::string_view>;
+using HeadersView = HttpHeaders<std::string_view>;
+using Header = HttpHeader<std::string>;
+using Headers = HttpHeaders<std::string>;
+
+
+} // namespace http
